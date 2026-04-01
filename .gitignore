@@ -16,3 +16,7 @@
 
 # Logs
 *.log
+
+# Android signing files
+**/*.jks
+**/keystore.properties

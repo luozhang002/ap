@@ -17,6 +17,9 @@
 # Logs
 *.log
 
+# Node / JavaScript (e.g. mobile/h5)
+**/node_modules/
+
 # Android signing files
 **/*.jks
 **/keystore.properties

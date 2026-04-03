@@ -23,3 +23,10 @@
 # Android signing files
 **/*.jks
 **/keystore.properties
+
+# iOS / Xcode (monorepo under mobile/ios)
+**/xcuserdata/
+*.xcuserstate
+**/DerivedData/
+# CocoaPods: keep Podfile / Podfile.lock; regenerate with `pod install`
+mobile/ios/**/Pods/

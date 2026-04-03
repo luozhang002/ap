@@ -1,0 +1,11 @@
+platform :ios, '15.0'
+
+target 'ap' do
+  use_frameworks!
+
+  # 将高德 iOS SDK（包含 MAMapKit / AMapFoundationKit / AMapLocationKit）放到：
+  # mobile/ios/ap/Vendor/AMapSDK/
+  # 并按 AMapSDK.podspec 里的路径把 xcframework/framework 名称替换成你的实际文件名。
+  pod 'AMapSDK', :podspec => './AMapSDK.podspec'
+end
+

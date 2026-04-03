@@ -1,0 +1,478 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1336940F2F7E610C0019A753 /* AMapFoundationKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1336940C2F7E610C0019A753 /* AMapFoundationKit.framework */; };
+		133694102F7E610C0019A753 /* MAMapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1336940D2F7E610C0019A753 /* MAMapKit.framework */; };
+		133694112F7E610C0019A753 /* AMapSearchKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1336940E2F7E610C0019A753 /* AMapSearchKit.framework */; };
+		13AF75F42F7E638F007D07BA /* AMapFoundationKit.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 1336940C2F7E610C0019A753 /* AMapFoundationKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		13AF75F52F7E638F007D07BA /* MAMapKit.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 1336940D2F7E610C0019A753 /* MAMapKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		13AF75F62F7E638F007D07BA /* AMapSearchKit.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 1336940E2F7E610C0019A753 /* AMapSearchKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		13AF76FC2F7E6DD3007D07BA /* CoreTelephony.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 13AF76FB2F7E6DD3007D07BA /* CoreTelephony.framework */; };
+		13AF76FE2F7E6DDF007D07BA /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 13AF76FD2F7E6DDF007D07BA /* SystemConfiguration.framework */; };
+		1E6B44235D20A98159561E97 /* Pods_ap.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1950C0F6D764F04F134CA35D /* Pods_ap.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		0A1B2C3D4E5F60718293A4B6 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstSubfolderSpec = 10;
+			files = (
+				13AF75F42F7E638F007D07BA /* AMapFoundationKit.framework in CopyFiles */,
+				13AF75F52F7E638F007D07BA /* MAMapKit.framework in CopyFiles */,
+				13AF75F62F7E638F007D07BA /* AMapSearchKit.framework in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		1302665D2F7E406200A32B47 /* ap.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ap.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1336940C2F7E610C0019A753 /* AMapFoundationKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AMapFoundationKit.framework; path = Vendor/AMapSDK/AMapFoundationKit.framework; sourceTree = "<group>"; };
+		1336940D2F7E610C0019A753 /* MAMapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MAMapKit.framework; path = Vendor/AMapSDK/MAMapKit.framework; sourceTree = "<group>"; };
+		1336940E2F7E610C0019A753 /* AMapSearchKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AMapSearchKit.framework; path = Vendor/AMapSDK/AMapSearchKit.framework; sourceTree = "<group>"; };
+		13AF76FB2F7E6DD3007D07BA /* CoreTelephony.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreTelephony.framework; path = System/Library/Frameworks/CoreTelephony.framework; sourceTree = SDKROOT; };
+		13AF76FD2F7E6DDF007D07BA /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
+		1950C0F6D764F04F134CA35D /* Pods_ap.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ap.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		CB7B4C74D96EFEE082192942 /* Pods-ap.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ap.debug.xcconfig"; path = "Target Support Files/Pods-ap/Pods-ap.debug.xcconfig"; sourceTree = "<group>"; };
+		E9D57D23093B75F75FC2BDA8 /* Pods-ap.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ap.release.xcconfig"; path = "Target Support Files/Pods-ap/Pods-ap.release.xcconfig"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		1302665F2F7E406200A32B47 /* ap */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ap;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1302665A2F7E406200A32B47 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				13AF76FE2F7E6DDF007D07BA /* SystemConfiguration.framework in Frameworks */,
+				13AF76FC2F7E6DD3007D07BA /* CoreTelephony.framework in Frameworks */,
+				1336940F2F7E610C0019A753 /* AMapFoundationKit.framework in Frameworks */,
+				133694102F7E610C0019A753 /* MAMapKit.framework in Frameworks */,
+				133694112F7E610C0019A753 /* AMapSearchKit.framework in Frameworks */,
+				1E6B44235D20A98159561E97 /* Pods_ap.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		130266542F7E406200A32B47 = {
+			isa = PBXGroup;
+			children = (
+				1302665F2F7E406200A32B47 /* ap */,
+				1302665E2F7E406200A32B47 /* Products */,
+				319F66048DB6E808451EE1D7 /* Pods */,
+				6489D7615220966C36EE71BA /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		1302665E2F7E406200A32B47 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1302665D2F7E406200A32B47 /* ap.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		319F66048DB6E808451EE1D7 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				CB7B4C74D96EFEE082192942 /* Pods-ap.debug.xcconfig */,
+				E9D57D23093B75F75FC2BDA8 /* Pods-ap.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		6489D7615220966C36EE71BA /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				13AF76FD2F7E6DDF007D07BA /* SystemConfiguration.framework */,
+				13AF76FB2F7E6DD3007D07BA /* CoreTelephony.framework */,
+				1336940C2F7E610C0019A753 /* AMapFoundationKit.framework */,
+				1336940E2F7E610C0019A753 /* AMapSearchKit.framework */,
+				1336940D2F7E610C0019A753 /* MAMapKit.framework */,
+				1950C0F6D764F04F134CA35D /* Pods_ap.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		1302665C2F7E406200A32B47 /* ap */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 130266682F7E406400A32B47 /* Build configuration list for PBXNativeTarget "ap" */;
+			buildPhases = (
+				740F26040BD23F1B19EA240D /* [CP] Check Pods Manifest.lock */,
+				130266592F7E406200A32B47 /* Sources */,
+				1302665A2F7E406200A32B47 /* Frameworks */,
+				0A1B2C3D4E5F60718293A4B6 /* CopyFiles */,
+				9E6F5A4B3C2D1E0F9A8B7C6D /* Codesign AMap frameworks (iphoneos) */,
+				1302665B2F7E406200A32B47 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				1302665F2F7E406200A32B47 /* ap */,
+			);
+			name = ap;
+			productName = ap;
+			productReference = 1302665D2F7E406200A32B47 /* ap.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		130266552F7E406200A32B47 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2640;
+				LastUpgradeCheck = 2640;
+				TargetAttributes = {
+					1302665C2F7E406200A32B47 = {
+						CreatedOnToolsVersion = 26.4;
+					};
+				};
+			};
+			buildConfigurationList = 130266582F7E406200A32B47 /* Build configuration list for PBXProject "ap" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 130266542F7E406200A32B47;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 1302665E2F7E406200A32B47 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				1302665C2F7E406200A32B47 /* ap */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		1302665B2F7E406200A32B47 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		740F26040BD23F1B19EA240D /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-ap-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		9E6F5A4B3C2D1E0F9A8B7C6D /* Codesign AMap frameworks (iphoneos) */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Codesign AMap frameworks (iphoneos)";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(WRAPPER_NAME)/Frameworks/.amap-codesigned",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "exit 0\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		130266592F7E406200A32B47 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		130266662F7E406400A32B47 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.3;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		130266672F7E406400A32B47 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.3;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		130266692F7E406400A32B47 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = CB7B4C74D96EFEE082192942 /* Pods-ap.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = PG57LNXR3J;
+				ENABLE_PREVIEWS = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Vendor/AMapSDK",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "需要定位权限以获取我的位置，用于拜访地图的距离筛选。";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-framework",
+					CoreTelephony,
+					"-framework",
+					SystemConfiguration,
+					"-lz",
+					"-lc++",
+					"-lc++abi",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ap.ap.ap;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		1302666A2F7E406400A32B47 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = E9D57D23093B75F75FC2BDA8 /* Pods-ap.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = PG57LNXR3J;
+				ENABLE_PREVIEWS = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Vendor/AMapSDK",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "需要定位权限以获取我的位置，用于拜访地图的距离筛选。";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-framework",
+					CoreTelephony,
+					"-framework",
+					SystemConfiguration,
+					"-lz",
+					"-lc++",
+					"-lc++abi",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ap.ap.ap;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		130266582F7E406200A32B47 /* Build configuration list for PBXProject "ap" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				130266662F7E406400A32B47 /* Debug */,
+				130266672F7E406400A32B47 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		130266682F7E406400A32B47 /* Build configuration list for PBXNativeTarget "ap" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				130266692F7E406400A32B47 /* Debug */,
+				1302666A2F7E406400A32B47 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 130266552F7E406200A32B47 /* Project object */;
+}

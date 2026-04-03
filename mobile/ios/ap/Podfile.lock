@@ -1,0 +1,16 @@
+PODS:
+  - AMapSDK (1.0.0)
+
+DEPENDENCIES:
+  - AMapSDK (from `./AMapSDK.podspec`)
+
+EXTERNAL SOURCES:
+  AMapSDK:
+    :podspec: "./AMapSDK.podspec"
+
+SPEC CHECKSUMS:
+  AMapSDK: 971b1815311ae41820dc8dc7905eb64e26e7b8ee
+
+PODFILE CHECKSUM: 6dd3f0cffb30edf2312db0b3224e5e5cb53a26d0
+
+COCOAPODS: 1.16.2

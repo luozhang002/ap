@@ -1,5 +1,9 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## 企业管理（Excel 导入）
+
+**维护说明：** 目前使用的 Excel 列模板与 `EnterpriseRecord` 等数据库模型是**可演进设计**，后续若模板或字段变更，通常需要联动调整：`oms/prisma/schema.prisma`（及与 OMS 共库的 CRM schema 若需同步）、`src/lib/enterprise-headers.ts`、`enterprise-import.ts` / `enterprise-parse.ts`、`enterprise-serialize.ts`、相关 API 路由与 `dashboard/enterprises` 页面展示与导出。
+
 ## Getting Started
 
 First, run the development server:

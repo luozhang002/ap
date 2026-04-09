@@ -1,10 +1,10 @@
-import styles from "./page.module.css";
+import { redirect } from "next/navigation";
+import { getOmsUser } from "@/lib/session";
+import { EnterprisesManagement } from "./EnterprisesManagement";
 
-export default function EnterprisesPage() {
-  return (
-    <div className={styles.wrap}>
-      <h1 className={styles.title}>企业管理</h1>
-      <div className={styles.placeholder}>企业管理功能开发中，敬请期待。</div>
-    </div>
-  );
+export default async function EnterprisesPage() {
+  const user = await getOmsUser();
+  if (!user) redirect("/login");
+
+  return <EnterprisesManagement />;
 }

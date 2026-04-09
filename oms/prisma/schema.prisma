@@ -14,6 +14,13 @@ enum Role {
   EMPLOYEE
 }
 
+/// Excel 三个 Sheet 对应类型（顺序：第 1 个 Sheet=一类，第 2=非常规名单，第 3=接力棒）
+enum EnterpriseSheetKind {
+  YILEI
+  FEICHANGGUI
+  JIELIEBANG
+}
+
 /// 用户表（物理表名 users，避免 MySQL 保留字 user）
 /// password 存 bcrypt 哈希，勿存明文
 model User {
@@ -23,5 +30,119 @@ model User {
   password String
   role     Role
 
+  enterpriseImportBatches EnterpriseImportBatch[]
+
   @@map("users")
+}
+
+/// 单次 Excel 上传批次
+model EnterpriseImportBatch {
+  id        Int      @id @default(autoincrement())
+  fileName  String
+  createdAt DateTime @default(now())
+
+  uploadedByUserId Int?
+  uploadedBy       User? @relation(fields: [uploadedByUserId], references: [id], onDelete: SetNull)
+
+  rowCountYilei       Int @default(0)
+  rowCountFeichanggui Int @default(0)
+  rowCountJieliebang  Int @default(0)
+
+  records EnterpriseRecord[]
+
+  @@index([createdAt])
+  @@map("enterprise_import_batches")
+}
+
+/// 企业管理行数据（与 Excel 列一一对应；后续各 Sheet 多出的列可写入 extraJson）
+model EnterpriseRecord {
+  id Int @id @default(autoincrement())
+
+  batchId Int
+  batch   EnterpriseImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  sheetKind EnterpriseSheetKind
+  rowIndex  Int
+
+  issueTime   DateTime?
+  provideTime DateTime?
+
+  region   String? @db.VarChar(128)
+  district String? @db.VarChar(128)
+  ccif     String? @db.VarChar(128)
+
+  customerName  String? @db.VarChar(512)
+  issuedAddress String? @db.Text
+
+  addressVerifyLabelBank String? @db.VarChar(512)
+
+  quotaAmount       Decimal? @db.Decimal(18, 2)
+  bestPackagePrice  Decimal? @db.Decimal(18, 2)
+  newOrExistingCustomer String? @db.VarChar(64)
+
+  isMgmCustomer Boolean?
+
+  lastCreditSuccessTime DateTime?
+  lockPeriodEnd         DateTime?
+
+  repaymentMethod String? @db.VarChar(256)
+
+  referencePrice      Decimal? @db.Decimal(18, 2)
+  bankHistoricalPrice Decimal? @db.Decimal(18, 2)
+
+  discountCouponAvailable Boolean?
+  defaultRateOver9        Boolean?
+
+  ownerName       String? @db.VarChar(256)
+  branchOwnerName String? @db.VarChar(256)
+  legalPersonName String? @db.VarChar(256)
+  contactPhone    String? @db.VarChar(64)
+
+  actualBusinessAddress String? @db.Text
+
+  firstContactTime  DateTime?
+  firstConnectTime  DateTime?
+  latestContactTime DateTime?
+  latestConnectTime DateTime?
+  lastVisitTime     DateTime?
+
+  contactCount Int?
+
+  hasCustomerIntent Boolean?
+  unreachableReason String? @db.VarChar(512)
+
+  scheduledVisitTime DateTime?
+
+  labelTag String? @db.VarChar(512)
+
+  actuallyVisited Boolean?
+  actualVisitTime DateTime?
+  metCustomer     Boolean?
+
+  suspectedRisk Boolean?
+
+  channel String? @db.VarChar(256)
+
+  telemarketingNote String? @db.Text
+  relayTag          String? @db.VarChar(512)
+  imageMaterials    String? @db.Text
+
+  addressVerified Boolean?
+
+  registerTime       DateTime?
+  todayRegisterCount Int?
+
+  parentRecordRef  String? @db.VarChar(512)
+  parentRecordRef2 String? @db.VarChar(512)
+
+  visitRemark String? @db.Text
+
+  extraJson Json?
+
+  @@index([batchId])
+  @@index([sheetKind])
+  @@index([customerName])
+  @@index([region])
+  @@index([issueTime])
+  @@map("enterprise_records")
 }

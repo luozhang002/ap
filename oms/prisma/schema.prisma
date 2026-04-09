@@ -1,0 +1,27 @@
+// 与 crm 工程共用同一 MySQL 库；修改 schema 后请在两个工程中保持同步并分别执行 generate。
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/// 管理员可登录 OMS；普通员工可登录 CRM（移动端）
+enum Role {
+  ADMIN
+  EMPLOYEE
+}
+
+/// 用户表（物理表名 users，避免 MySQL 保留字 user）
+/// password 存 bcrypt 哈希，勿存明文
+model User {
+  id       Int    @id @default(autoincrement())
+  username String @unique
+  name     String
+  password String
+  role     Role
+
+  @@map("users")
+}

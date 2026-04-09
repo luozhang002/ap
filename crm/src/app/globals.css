@@ -1,0 +1,13 @@
+/* 与登录页浅色底一致，首帧不闪白 */
+html {
+  height: 100%;
+  background-color: #e6fffb;
+}
+
+body.crm-body {
+  margin: 0;
+  min-height: 100%;
+  min-height: 100dvh;
+  background: linear-gradient(180deg, #e6fffb 0%, #f6ffed 45%, #f0f5ff 100%);
+  color: #0f172a;
+}

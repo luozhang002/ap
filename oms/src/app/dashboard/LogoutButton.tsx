@@ -1,9 +1,8 @@
 "use client";
 
-import { LogoutOutlined } from "@ant-design/icons";
-import { Button } from "antd";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import styles from "./LogoutButton.module.css";
 
 export function LogoutButton() {
   const router = useRouter();
@@ -21,8 +20,8 @@ export function LogoutButton() {
   };
 
   return (
-    <Button icon={<LogoutOutlined />} loading={loading} onClick={onLogout}>
-      退出
-    </Button>
+    <button type="button" className={styles.btn} disabled={loading} onClick={onLogout}>
+      {loading ? "退出中…" : "退出"}
+    </button>
   );
 }

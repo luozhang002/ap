@@ -144,5 +144,7 @@ model EnterpriseRecord {
   @@index([customerName])
   @@index([region])
   @@index([issueTime])
+  @@index([ownerName])
+  @@index([branchOwnerName])
   @@map("enterprise_records")
 }

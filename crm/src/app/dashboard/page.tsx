@@ -1,5 +1,6 @@
-import { AimOutlined, EnvironmentOutlined, TeamOutlined } from "@ant-design/icons";
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getEnterprisesForManager } from "@/lib/crm-visited-enterprises";
 import { getCrmUser } from "@/lib/session";
 import { LogoutButton } from "./LogoutButton";
 import styles from "./page.module.css";
@@ -7,6 +8,8 @@ import styles from "./page.module.css";
 export default async function DashboardPage() {
   const user = await getCrmUser();
   if (!user) redirect("/login");
+
+  const { items } = await getEnterprisesForManager(user.name);
 
   return (
     <div className={styles.page}>
@@ -17,43 +20,75 @@ export default async function DashboardPage() {
             {user.name}（{user.username}）· 外勤员工
           </p>
         </div>
-        <LogoutButton />
+        <div className={styles.topActions}>
+          <Link href="/dashboard/visit-map" className={styles.mapLink}>
+            陌拜地图
+          </Link>
+          <LogoutButton />
+        </div>
       </header>
       <main className={styles.main}>
-        <section className={styles.hero}>
-          <h2>今日概览</h2>
-          <p>
-            后续可在此接入客户列表、拜访地图、路线规划与签到。当前页面用于验证普通员工登录态与移动端布局。
+        <section className={`${styles.hero} ${styles.heroVisited}`}>
+          <h2>我的企业</h2>
+          <p className={styles.sectionHint}>
+            根据您账号「姓名」与 OMS 导入「分中心负责人」（客户经理）匹配；含已拜访与未拜访，卡片上可区分状态。
           </p>
-          <div className={styles.grid}>
-            <div className={styles.tile}>
-              <div className={styles.icon} aria-hidden>
-                <TeamOutlined />
-              </div>
-              <div>
-                <h3>客户跟进</h3>
-                <p>线索、商机与联系人（规划中）</p>
-              </div>
-            </div>
-            <div className={styles.tile}>
-              <div className={styles.icon} aria-hidden>
-                <EnvironmentOutlined />
-              </div>
-              <div>
-                <h3>地图拜访</h3>
-                <p>附近客户、路线与签到（规划中）</p>
-              </div>
-            </div>
-            <div className={styles.tile}>
-              <div className={styles.icon} aria-hidden>
-                <AimOutlined />
-              </div>
-              <div>
-                <h3>任务与日程</h3>
-                <p>待办、提醒与协同（规划中）</p>
-              </div>
-            </div>
-          </div>
+          {items.length === 0 ? (
+            <p className={styles.emptyHint}>
+              暂无负责企业。请确认用户「姓名」与 Excel「分中心负责人」一致（含空格、全半角须一致）。
+            </p>
+          ) : (
+            <ul className={styles.cardList} aria-label="负责企业列表">
+              {items.map((e) => (
+                <li key={e.id} className={styles.visitCard}>
+                  <div className={styles.visitCardTop}>
+                    <span className={styles.visitCardName}>{e.customerName?.trim() || `企业 #${e.id}`}</span>
+                    <div className={styles.badges}>
+                      <span className={e.isVisited ? styles.statusVisited : styles.statusPending}>
+                        {e.isVisited ? "已拜访" : "未拜访"}
+                      </span>
+                      <span className={styles.kindBadge}>{e.sheetKindLabel}</span>
+                    </div>
+                  </div>
+                  {(e.region || e.district) && (
+                    <p className={styles.visitCardLine}>
+                      {[e.region, e.district].filter(Boolean).join(" · ")}
+                    </p>
+                  )}
+                  {e.issuedAddress?.trim() && (
+                    <p className={styles.visitCardAddr} title={e.issuedAddress}>
+                      {e.issuedAddress}
+                    </p>
+                  )}
+                  <dl className={styles.visitMeta}>
+                    {e.actualVisitTime && (
+                      <div className={styles.metaRow}>
+                        <dt>实际上门</dt>
+                        <dd>{e.actualVisitTime}</dd>
+                      </div>
+                    )}
+                    {e.lastVisitTime && (
+                      <div className={styles.metaRow}>
+                        <dt>最近上门</dt>
+                        <dd>{e.lastVisitTime}</dd>
+                      </div>
+                    )}
+                    {e.contactPhone?.trim() && (
+                      <div className={styles.metaRow}>
+                        <dt>联系电话</dt>
+                        <dd>{e.contactPhone}</dd>
+                      </div>
+                    )}
+                  </dl>
+                  {e.visitRemark?.trim() && (
+                    <p className={styles.visitRemark} title={e.visitRemark}>
+                      {e.visitRemark}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       </main>
     </div>

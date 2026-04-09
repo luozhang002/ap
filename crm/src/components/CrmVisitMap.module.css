@@ -1,0 +1,25 @@
+.controls {
+  width: 100%;
+}
+
+.mapPane {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(230, 255, 251, 0.35);
+  height: 420px;
+}
+
+@media (min-width: 768px) {
+  .mapPane {
+    height: min(68vh, 780px);
+    min-height: 520px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .mapPane {
+    height: min(72vh, 880px);
+    min-height: 560px;
+  }
+}

@@ -45,6 +45,12 @@ type RecordRow = {
   channel: string | null;
   relayTag: string | null;
   telemarketingNote?: string | null;
+  lastVisitTime: string | null;
+  scheduledVisitTime: string | null;
+  actuallyVisited: boolean | null;
+  actualVisitTime: string | null;
+  metCustomer: boolean | null;
+  visitRemark: string | null;
   extraJson: unknown;
   batch: { id: number; fileName: string; createdAt: string };
 };
@@ -399,6 +405,15 @@ export function EnterprisesManagement() {
       "额度",
       "联系电话",
       "渠道",
+      "接力棒标签",
+      "是否实际上门",
+      "是否见到客户",
+      "最近一次上门时间",
+      "预约上门时间",
+      "实际上门时间",
+      "联系/走访情况备注",
+      "MGM",
+      "导入批次",
     ];
     const lines = [
       headers.map(escapeCsvCell).join(","),
@@ -416,6 +431,15 @@ export function EnterprisesManagement() {
           r.quotaAmount ?? "",
           r.contactPhone ?? "",
           r.channel ?? "",
+          r.relayTag ?? "",
+          fmtBool(r.actuallyVisited),
+          fmtBool(r.metCustomer),
+          r.lastVisitTime ? fmtDate(r.lastVisitTime) : "",
+          r.scheduledVisitTime ? fmtDate(r.scheduledVisitTime) : "",
+          r.actualVisitTime ? fmtDate(r.actualVisitTime) : "",
+          r.visitRemark ?? "",
+          fmtBool(r.isMgmCustomer),
+          r.batch ? `#${r.batch.id} ${r.batch.fileName}` : "",
         ]
           .map((c) => escapeCsvCell(String(c)))
           .join(",")
@@ -641,6 +665,12 @@ export function EnterprisesManagement() {
               <th>联系电话</th>
               <th>渠道</th>
               <th>接力棒标签</th>
+              <th>是否实际上门</th>
+              <th>是否见到客户</th>
+              <th>最近一次上门时间</th>
+              <th>预约上门时间</th>
+              <th>实际上门时间</th>
+              <th>联系/走访备注</th>
               <th>MGM</th>
               <th>导入批次</th>
               <th className={styles.colOp}>操作</th>
@@ -649,13 +679,13 @@ export function EnterprisesManagement() {
           <tbody>
             {records.length === 0 && !loading ? (
               <tr>
-                <td colSpan={16} className={styles.muted}>
+                <td colSpan={22} className={styles.muted}>
                   暂无数据，请先导入 Excel
                 </td>
               </tr>
             ) : records.length === 0 && loading ? (
               <tr>
-                <td colSpan={16} className={styles.loadingPlaceholderCell} />
+                <td colSpan={22} className={styles.loadingPlaceholderCell} />
               </tr>
             ) : (
               records.map((r) => (
@@ -675,6 +705,14 @@ export function EnterprisesManagement() {
                   <td>{r.contactPhone ?? "—"}</td>
                   <td>{r.channel ?? "—"}</td>
                   <td>{r.relayTag ?? "—"}</td>
+                  <td>{fmtBool(r.actuallyVisited)}</td>
+                  <td>{fmtBool(r.metCustomer)}</td>
+                  <td>{fmtDate(r.lastVisitTime)}</td>
+                  <td>{fmtDate(r.scheduledVisitTime)}</td>
+                  <td>{fmtDate(r.actualVisitTime)}</td>
+                  <td className={styles.cellLong} title={r.visitRemark ?? undefined}>
+                    {r.visitRemark?.trim() ? r.visitRemark : "—"}
+                  </td>
                   <td>{fmtBool(r.isMgmCustomer)}</td>
                   <td className={styles.cellBatch} title={r.batch?.fileName}>
                     #{r.batch?.id} {r.batch?.fileName}

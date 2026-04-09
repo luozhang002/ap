@@ -1,0 +1,115 @@
+.page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: linear-gradient(180deg, #e6fffb 0%, #f6ffed 45%, #ffffff 100%);
+  color: #0f172a;
+}
+
+.top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: max(12px, env(safe-area-inset-top)) 16px 12px;
+  border-bottom: 1px solid rgba(8, 151, 156, 0.15);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(12px);
+}
+
+.brand {
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.sub {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: rgba(71, 85, 105, 0.95);
+  line-height: 1.4;
+}
+
+.backLink {
+  flex: none;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #08979c;
+  background: rgba(8, 151, 156, 0.1);
+  border: 1px solid rgba(8, 151, 156, 0.25);
+  text-decoration: none;
+}
+
+.backLink:active {
+  opacity: 0.85;
+}
+
+.main {
+  width: 100%;
+  max-width: min(1320px, 100%);
+  margin: 0 auto;
+  padding: 16px 16px 40px;
+  box-sizing: border-box;
+  min-height: min(560px, 85dvh);
+}
+
+@media (min-width: 900px) {
+  .main {
+    padding: 20px 24px 48px;
+  }
+}
+
+/** 地图包动态加载前的纯 CSS 占位（无 Ant Design，避免首帧无样式闪烁） */
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.skeletonToolbar {
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(8, 151, 156, 0.14);
+  animation: skeletonPulse 1.2s ease-in-out infinite;
+}
+
+.skeletonMap {
+  width: 100%;
+  height: 420px;
+  border-radius: 12px;
+  background: rgba(230, 255, 251, 0.5);
+  border: 1px solid rgba(8, 151, 156, 0.16);
+  animation: skeletonPulse 1.2s ease-in-out infinite;
+}
+
+@media (min-width: 768px) {
+  .skeletonMap {
+    height: min(68vh, 780px);
+    min-height: 520px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .skeletonMap {
+    height: min(72vh, 880px);
+    min-height: 560px;
+  }
+}
+
+@keyframes skeletonPulse {
+  0%,
+  100% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 1;
+  }
+}

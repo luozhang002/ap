@@ -7,9 +7,13 @@ export async function getCrmSession() {
   const token = (await cookies()).get("crm_token")?.value;
   const secret = process.env.JWT_SECRET;
   if (!token || !secret) return null;
-  const v = await verifySessionToken(token, secret);
-  if (!v || v.app !== "crm" || v.role !== "EMPLOYEE") return null;
-  return v;
+  try {
+    const v = await verifySessionToken(token, secret);
+    if (!v || v.app !== "crm" || v.role !== "EMPLOYEE") return null;
+    return v;
+  } catch {
+    return null;
+  }
 }
 
 export type SafeUser = {

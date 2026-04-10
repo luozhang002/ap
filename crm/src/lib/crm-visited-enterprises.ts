@@ -15,7 +15,8 @@ export type ManagerEnterpriseCard = {
   sheetKind: EnterpriseSheetKind;
   sheetKindLabel: string;
   issuedAddress: string | null;
-  region: string | null;
+  province: string | null;
+  city: string | null;
   district: string | null;
   /** 是否已拜访：实际上门为是，或存在最近/实际上门时间 */
   isVisited: boolean;
@@ -58,9 +59,10 @@ export async function getEnterprisesForManager(userDisplayName: string): Promise
       customerName: string | null;
       sheetKind: EnterpriseSheetKind;
       issuedAddress: string | null;
-      region: string | null;
+      province: string | null;
+      city: string | null;
       district: string | null;
-      actuallyVisited: boolean | number | bigint | null; // raw 查询可能为 0/1
+      actuallyVisited: boolean | number | bigint | null;
       lastVisitTime: Date | null;
       actualVisitTime: Date | null;
       contactPhone: string | null;
@@ -68,7 +70,7 @@ export async function getEnterprisesForManager(userDisplayName: string): Promise
     }>
   >(
     Prisma.sql`
-      SELECT id, customerName, sheetKind, issuedAddress, region, district,
+      SELECT id, customerName, sheetKind, issuedAddress, province, city, district,
              actuallyVisited, lastVisitTime, actualVisitTime, contactPhone, visitRemark
       FROM enterprise_records
       WHERE branchOwnerName IS NOT NULL
@@ -84,7 +86,8 @@ export async function getEnterprisesForManager(userDisplayName: string): Promise
     sheetKind: r.sheetKind,
     sheetKindLabel: SHEET_LABEL[r.sheetKind] ?? r.sheetKind,
     issuedAddress: r.issuedAddress,
-    region: r.region,
+    province: r.province,
+    city: r.city,
     district: r.district,
     isVisited: rowIsVisited(r),
     lastVisitTime: fmtDisplay(r.lastVisitTime),

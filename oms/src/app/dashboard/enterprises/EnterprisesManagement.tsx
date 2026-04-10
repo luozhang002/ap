@@ -29,15 +29,19 @@ type RecordRow = {
   rowIndex: number;
   issueTime: string | null;
   provideTime: string | null;
-  region: string | null;
+  province: string | null;
+  city: string | null;
   district: string | null;
+  street: string | null;
   ccif: string | null;
   customerName: string | null;
   issuedAddress: string | null;
-  addressVerifyLabelBank: string | null;
+  addressVerifyLabel: string | null;
+  industry: string | null;
   quotaAmount: string | null;
   bestPackagePrice: string | null;
   newOrExistingCustomer: string | null;
+  customerLevel: string | null;
   isMgmCustomer: boolean | null;
   ownerName: string | null;
   branchOwnerName: string | null;
@@ -106,7 +110,7 @@ export function EnterprisesManagement() {
   const [customerName, setCustomerName] = useState("");
   /** 客户经理 → 库字段「分中心负责人」 */
   const [branchOwnerName, setBranchOwnerName] = useState("");
-  const [region, setRegion] = useState("");
+  const [city, setCity] = useState("");
   /** 负责人 → 库字段「负责人」 */
   const [ownerName, setOwnerName] = useState("");
 
@@ -120,7 +124,7 @@ export function EnterprisesManagement() {
   const [editSaving, setEditSaving] = useState(false);
   const [editDraft, setEditDraft] = useState({
     customerName: "",
-    region: "",
+    city: "",
     district: "",
     ccif: "",
     branchOwnerName: "",
@@ -162,7 +166,7 @@ export function EnterprisesManagement() {
         if (bid) p.set("batchId", bid);
         if (customerName.trim()) p.set("customerName", customerName.trim());
         if (branchOwnerName.trim()) p.set("branchOwnerName", branchOwnerName.trim());
-        if (region.trim()) p.set("region", region.trim());
+        if (city.trim()) p.set("city", city.trim());
         if (district.trim()) p.set("district", district.trim());
         if (ownerName.trim()) p.set("ownerName", ownerName.trim());
         if (issueFrom) p.set("issueFrom", issueFrom);
@@ -189,7 +193,7 @@ export function EnterprisesManagement() {
       batchId,
       customerName,
       branchOwnerName,
-      region,
+      city,
       district,
       ownerName,
       issueFrom,
@@ -219,7 +223,7 @@ export function EnterprisesManagement() {
     setEditRow(r);
     setEditDraft({
       customerName: r.customerName ?? "",
-      region: r.region ?? "",
+      city: r.city ?? "",
       district: r.district ?? "",
       ccif: r.ccif ?? "",
       branchOwnerName: r.branchOwnerName ?? "",
@@ -245,7 +249,7 @@ export function EnterprisesManagement() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customerName: editDraft.customerName,
-          region: editDraft.region,
+          city: editDraft.city,
           district: editDraft.district,
           ccif: editDraft.ccif,
           branchOwnerName: editDraft.branchOwnerName,
@@ -377,7 +381,7 @@ export function EnterprisesManagement() {
   const resetFilters = () => {
     setCustomerName("");
     setBranchOwnerName("");
-    setRegion("");
+    setCity("");
     setOwnerName("");
     setSheetKind("");
     setBatchId("");
@@ -395,8 +399,9 @@ export function EnterprisesManagement() {
     const headers = [
       "类别",
       "企业名称",
-      "下发的地址",
-      "地区",
+      "下发地址",
+      "所在省",
+      "所在市",
       "所在区",
       "CCIF",
       "客户经理",
@@ -422,7 +427,8 @@ export function EnterprisesManagement() {
           SHEET_LABELS[r.sheetKind] ?? r.sheetKind,
           r.customerName ?? "",
           r.issuedAddress ?? "",
-          r.region ?? "",
+          r.province ?? "",
+          r.city ?? "",
           r.district ?? "",
           r.ccif ?? "",
           r.branchOwnerName ?? "",
@@ -498,12 +504,12 @@ export function EnterprisesManagement() {
             />
           </label>
           <label className={styles.filterItem}>
-            <span className={styles.filterLabel}>地区</span>
+            <span className={styles.filterLabel}>所在市</span>
             <input
               className={styles.filterInput}
-              placeholder="请输入地区"
-              value={region}
-              onChange={(e) => setRegion(e.target.value)}
+              placeholder="请输入所在市"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") applySearch();
               }}
@@ -654,8 +660,9 @@ export function EnterprisesManagement() {
             <tr>
               <th>类别</th>
               <th>企业名称</th>
-              <th>下发的地址</th>
-              <th>地区</th>
+              <th>下发地址</th>
+              <th>所在省</th>
+              <th>所在市</th>
               <th>所在区</th>
               <th>CCIF</th>
               <th>客户经理</th>
@@ -679,13 +686,13 @@ export function EnterprisesManagement() {
           <tbody>
             {records.length === 0 && !loading ? (
               <tr>
-                <td colSpan={22} className={styles.muted}>
+                <td colSpan={23} className={styles.muted}>
                   暂无数据，请先导入 Excel
                 </td>
               </tr>
             ) : records.length === 0 && loading ? (
               <tr>
-                <td colSpan={22} className={styles.loadingPlaceholderCell} />
+                <td colSpan={23} className={styles.loadingPlaceholderCell} />
               </tr>
             ) : (
               records.map((r) => (
@@ -695,7 +702,8 @@ export function EnterprisesManagement() {
                   <td className={styles.cellLong} title={r.issuedAddress ?? undefined}>
                     {r.issuedAddress?.trim() ? r.issuedAddress : "—"}
                   </td>
-                  <td>{r.region ?? "—"}</td>
+                  <td>{r.province ?? "—"}</td>
+                  <td>{r.city ?? "—"}</td>
                   <td>{r.district ?? "—"}</td>
                   <td>{r.ccif ?? "—"}</td>
                   <td>{r.branchOwnerName ?? "—"}</td>
@@ -761,10 +769,10 @@ export function EnterprisesManagement() {
                 />
               </label>
               <label className={styles.modalField}>
-                <span>地区</span>
+                <span>所在市</span>
                 <input
-                  value={editDraft.region}
-                  onChange={(e) => setEditDraft((d) => ({ ...d, region: e.target.value }))}
+                  value={editDraft.city}
+                  onChange={(e) => setEditDraft((d) => ({ ...d, city: e.target.value }))}
                 />
               </label>
               <label className={styles.modalField}>

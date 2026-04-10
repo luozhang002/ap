@@ -50,9 +50,9 @@ export default async function DashboardPage() {
                       <span className={styles.kindBadge}>{e.sheetKindLabel}</span>
                     </div>
                   </div>
-                  {(e.region || e.district) && (
+                  {(e.province || e.city || e.district) && (
                     <p className={styles.visitCardLine}>
-                      {[e.region, e.district].filter(Boolean).join(" · ")}
+                      {[e.province, e.city, e.district].filter(Boolean).join(" · ")}
                     </p>
                   )}
                   {e.issuedAddress?.trim() && (

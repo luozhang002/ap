@@ -54,95 +54,151 @@ model EnterpriseImportBatch {
   @@map("enterprise_import_batches")
 }
 
-/// 企业管理行数据（与 Excel 列一一对应；后续各 Sheet 多出的列可写入 extraJson）
+/// 企业管理行数据（与 Excel 列一一对应；各 Sheet 多出的列可写入 extraJson）
 model EnterpriseRecord {
   id Int @id @default(autoincrement())
 
   batchId Int
   batch   EnterpriseImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
 
+  /// Excel Sheet 类型：YILEI=一类, FEICHANGGUI=非常规名单, JIELIEBANG=接力棒
   sheetKind EnterpriseSheetKind
+  /// 该行在 Sheet 内的行号（0-based）
   rowIndex  Int
 
+  /// 下发时间(不可改)
   issueTime   DateTime?
+  /// 提供时间
   provideTime DateTime?
 
-  region   String? @db.VarChar(128)
+  /// 所在省
+  province String? @db.VarChar(128)
+  /// 所在市
+  city     String? @db.VarChar(128)
+  /// 所在区
   district String? @db.VarChar(128)
+  /// 所在街道
+  street   String? @db.VarChar(256)
+  /// CCIF 编码
   ccif     String? @db.VarChar(128)
 
+  /// 客户名称
   customerName  String? @db.VarChar(512)
+  /// 下发地址
   issuedAddress String? @db.Text
 
-  addressVerifyLabelBank String? @db.VarChar(512)
-
-  quotaAmount       Decimal? @db.Decimal(18, 2)
-  bestPackagePrice  Decimal? @db.Decimal(18, 2)
-  newOrExistingCustomer String? @db.VarChar(64)
-
-  isMgmCustomer Boolean?
-
-  lastCreditSuccessTime DateTime?
-  lockPeriodEnd         DateTime?
-
-  repaymentMethod String? @db.VarChar(256)
-
-  referencePrice      Decimal? @db.Decimal(18, 2)
-  bankHistoricalPrice Decimal? @db.Decimal(18, 2)
-
-  discountCouponAvailable Boolean?
-  defaultRateOver9        Boolean?
-
-  ownerName       String? @db.VarChar(256)
-  branchOwnerName String? @db.VarChar(256)
-  legalPersonName String? @db.VarChar(256)
-  contactPhone    String? @db.VarChar(64)
-
+  /// 地址核验标签
+  addressVerifyLabel String? @db.VarChar(512)
+  /// 行业
+  industry           String? @db.VarChar(256)
+  /// 是否完成地址核验
+  addressVerified    Boolean?
+  /// 实际经营地址
   actualBusinessAddress String? @db.Text
 
+  /// 额度
+  quotaAmount       Decimal? @db.Decimal(18, 2)
+  /// 当前最优套餐价格
+  bestPackagePrice  Decimal? @db.Decimal(18, 2)
+  /// 新/存 客
+  newOrExistingCustomer String? @db.VarChar(64)
+  /// 客户级别
+  customerLevel     String? @db.VarChar(128)
+
+  /// 最近一次授信成功时间
+  lastCreditSuccessTime DateTime?
+  /// 锁期时间
+  lockPeriodEnd         DateTime?
+  /// 当前套餐还款方式
+  repaymentMethod String? @db.VarChar(256)
+
+  /// 参考价
+  referencePrice      Decimal? @db.Decimal(18, 2)
+  /// 我行历史参考价
+  bankHistoricalPrice Decimal? @db.Decimal(18, 2)
+
+  /// 是否可用折扣券
+  discountCouponAvailable Boolean?
+  /// 预计金额违约率是否大于9
+  defaultRateOver9        Boolean?
+
+  /// 负责人
+  ownerName       String? @db.VarChar(256)
+  /// 分中心负责人（客户经理，CRM 依此匹配登录用户）
+  branchOwnerName String? @db.VarChar(256)
+  /// 法人姓名
+  legalPersonName String? @db.VarChar(256)
+  /// 联系电话
+  contactPhone    String? @db.VarChar(64)
+
+  /// 首次联系时间
   firstContactTime  DateTime?
+  /// 首次接通时间（一类/接力棒）
   firstConnectTime  DateTime?
+  /// 最新一次联系时间（多次联系的填写）（一类/接力棒）
   latestContactTime DateTime?
+  /// 最新一次接通时间（一类/接力棒）
   latestConnectTime DateTime?
+  /// 最近一次上门时间
   lastVisitTime     DateTime?
 
+  /// 联系次数（一类/接力棒）
   contactCount Int?
-
+  /// 确认客户是否有意愿（一类/接力棒）
   hasCustomerIntent Boolean?
+  /// 未触达原因
   unreachableReason String? @db.VarChar(512)
-
+  /// 预约上门时间
   scheduledVisitTime DateTime?
 
+  /// 联系/走访情况备注
+  visitRemark String? @db.Text
+  /// label 标签
   labelTag String? @db.VarChar(512)
 
+  /// 是否实际上门
   actuallyVisited Boolean?
+  /// 实际上门时间
   actualVisitTime DateTime?
+  /// 是否见到客户
   metCustomer     Boolean?
 
-  suspectedRisk Boolean?
-
+  /// 渠道
   channel String? @db.VarChar(256)
-
-  telemarketingNote String? @db.Text
-  relayTag          String? @db.VarChar(512)
+  /// 影像资料
   imageMaterials    String? @db.Text
-
-  addressVerified Boolean?
-
+  /// 登记时间
   registerTime       DateTime?
+
+  /// 电销备注（一类/接力棒）
+  telemarketingNote String? @db.Text
+  /// 接力棒标签（一类/接力棒）
+  relayTag          String? @db.VarChar(512)
+  /// 是否为MGM客户（一类/接力棒）
+  isMgmCustomer Boolean?
+  /// 是否疑似风险客户（客户经理独立意见）（一类/接力棒）
+  suspectedRisk Boolean?
+  /// 今天登记次数（一类/接力棒）
   todayRegisterCount Int?
 
-  parentRecordRef  String? @db.VarChar(512)
-  parentRecordRef2 String? @db.VarChar(512)
+  /// 名单类型（仅非常规名单）
+  listType    String? @db.VarChar(128)
+  /// 沉默天数（仅非常规名单）
+  silentDays  Int?
+  /// 套餐（仅非常规名单）
+  packageName String? @db.VarChar(256)
+  /// 实际经营地址是否和注册地址一致（仅非常规名单）
+  addressMatchRegistered Boolean?
+  /// 客户类型（仅非常规名单）
+  customerType String? @db.VarChar(128)
 
-  visitRemark String? @db.Text
-
+  /// 未被表头映射命中的 Excel 列；也存地图坐标缓存
   extraJson Json?
 
   @@index([batchId])
   @@index([sheetKind])
   @@index([customerName])
-  @@index([region])
+  @@index([city])
   @@index([issueTime])
   @@index([ownerName])
   @@index([branchOwnerName])

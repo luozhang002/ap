@@ -11,8 +11,10 @@ type Params = { params: Promise<{ id: string }> };
 /** 允许 PATCH 的字符串字段（下发时间等导入锚点字段不可改） */
 const PATCHABLE_STRING = new Set([
   "customerName",
-  "region",
+  "province",
+  "city",
   "district",
+  "street",
   "ccif",
   "branchOwnerName",
   "ownerName",
@@ -24,14 +26,17 @@ const PATCHABLE_STRING = new Set([
   "visitRemark",
   "issuedAddress",
   "actualBusinessAddress",
-  "addressVerifyLabelBank",
+  "addressVerifyLabel",
+  "industry",
+  "customerLevel",
   "labelTag",
   "imageMaterials",
   "newOrExistingCustomer",
   "repaymentMethod",
   "unreachableReason",
-  "parentRecordRef",
-  "parentRecordRef2",
+  "listType",
+  "packageName",
+  "customerType",
 ]);
 
 function forbiddenKeys(body: Record<string, unknown>): string | null {

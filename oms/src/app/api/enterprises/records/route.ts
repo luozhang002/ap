@@ -38,7 +38,7 @@ export async function GET(req: Request) {
     const customerName = (searchParams.get("customerName") || "").trim();
     /** 客户经理：对应库字段「分中心负责人」 */
     const branchOwnerName = (searchParams.get("branchOwnerName") || "").trim();
-    const region = (searchParams.get("region") || "").trim();
+    const city = (searchParams.get("city") || "").trim();
     const district = (searchParams.get("district") || "").trim();
     /** 负责人：对应库字段「负责人」 */
     const ownerName = (searchParams.get("ownerName") || "").trim();
@@ -68,8 +68,8 @@ export async function GET(req: Request) {
     if (branchOwnerName) {
       conditions.push({ branchOwnerName: { contains: branchOwnerName } });
     }
-    if (region) {
-      conditions.push({ region: { contains: region } });
+    if (city) {
+      conditions.push({ city: { contains: city } });
     }
     if (district) {
       conditions.push({ district: { contains: district } });

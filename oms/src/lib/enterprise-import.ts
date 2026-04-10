@@ -33,6 +33,7 @@ const BOOL_FIELDS = new Set<string>([
   "metCustomer",
   "suspectedRisk",
   "addressVerified",
+  "addressMatchRegistered",
 ]);
 
 const DECIMAL_FIELDS = new Set<string>([
@@ -42,7 +43,7 @@ const DECIMAL_FIELDS = new Set<string>([
   "bankHistoricalPrice",
 ]);
 
-const INT_FIELDS = new Set<string>(["contactCount", "todayRegisterCount"]);
+const INT_FIELDS = new Set<string>(["contactCount", "todayRegisterCount", "silentDays"]);
 
 function setField(
   target: Record<string, unknown>,

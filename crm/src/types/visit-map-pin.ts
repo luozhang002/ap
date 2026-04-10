@@ -7,6 +7,7 @@ export type VisitMapPin = {
   longitude: number | null;
   visitStatus: "VISITED" | "UNVISITED";
   visitedAt?: string | null;
-  region: string | null;
+  province: string | null;
+  city: string | null;
   district: string | null;
 };

@@ -31,7 +31,8 @@ export async function GET() {
       sheetKind: string;
       issuedAddress: string | null;
       actualBusinessAddress: string | null;
-      region: string | null;
+      province: string | null;
+      city: string | null;
       district: string | null;
       actuallyVisited: boolean | number | bigint | null;
       lastVisitTime: Date | null;
@@ -40,7 +41,7 @@ export async function GET() {
     }>
   >(
     Prisma.sql`
-      SELECT id, customerName, sheetKind, issuedAddress, actualBusinessAddress, region, district,
+      SELECT id, customerName, sheetKind, issuedAddress, actualBusinessAddress, province, city, district,
              actuallyVisited, lastVisitTime, actualVisitTime, extraJson
       FROM enterprise_records
       WHERE branchOwnerName IS NOT NULL
@@ -58,7 +59,7 @@ export async function GET() {
     });
     const coords = parseMapCoordsFromExtra(r.extraJson);
     const addrFromIssued = [r.issuedAddress, r.actualBusinessAddress].find((s) => s?.trim())?.trim();
-    const addrFromRegion = [r.region, r.district].filter(Boolean).join(" · ");
+    const addrFromRegion = [r.province, r.city, r.district].filter(Boolean).join(" · ");
     let addr = "";
     if (addrFromIssued) {
       addr = addrFromIssued;
@@ -79,7 +80,8 @@ export async function GET() {
         : r.lastVisitTime
           ? r.lastVisitTime.toISOString()
           : null,
-      region: r.region,
+      province: r.province,
+      city: r.city,
       district: r.district,
     };
   });

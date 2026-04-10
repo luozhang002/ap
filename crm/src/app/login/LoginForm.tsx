@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "./LoginForm.module.css";
 
 function UserIcon() {
@@ -29,9 +28,19 @@ function MapPinIcon() {
 }
 
 export function LoginForm() {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has("password") || url.searchParams.has("username")) {
+        window.history.replaceState({}, "", `${url.pathname}${url.hash}`);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -48,6 +57,7 @@ export function LoginForm() {
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
@@ -56,15 +66,16 @@ export function LoginForm() {
         setError(typeof data.error === "string" ? data.error : "登录失败");
         return;
       }
-      router.push("/dashboard");
-      router.refresh();
+      window.location.assign("/dashboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "网络错误，请检查控制台与 Next dev 是否允许当前访问来源");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form className={styles.form} onSubmit={onSubmit} noValidate>
+    <form className={styles.form} method="post" onSubmit={onSubmit} noValidate>
       {error ? <p className={styles.error}>{error}</p> : null}
 
       <div className={styles.field}>

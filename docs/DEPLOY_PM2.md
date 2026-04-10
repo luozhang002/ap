@@ -327,6 +327,31 @@ sudo ss -tlnp | grep 3000
 
 关闭占用进程或修改 `package.json` 里端口（需同步改防火墙与访问地址）。
 
+### 5. CentOS 7 上执行 `node -v` 报 `GLIBC_2.27` / `GLIBCXX_3.4.21` / `CXXABI_1.3.9` 等
+
+**原因：** CentOS 7 自带的 **glibc 版本较旧（约 2.17）**。通过 nvm 下载的 **Node 官方预编译包**（如 Node 18+、20、23）是针对 **较新 glibc** 的系统打的，在 CentOS 7 上运行就会报上述符号找不到。
+
+**可行做法（按推荐顺序）：**
+
+1. **换系统镜像（最省心）**  
+   新机器或重装时改用 **Rocky Linux 8/9、AlmaLinux 8/9、Ubuntu 22.04** 等，再按本文安装 nvm / Node，一般不再出现此类错误。
+
+2. **继续用 CentOS 7 时：用 Docker 跑 Node（推荐）**  
+   宿主机只装 Docker，应用在 **镜像内** 使用较新的 Linux 与 Node，不依赖 CentOS 7 的 glibc。见 **`DEPLOY_DOCKER.md`**。
+
+3. **继续用 CentOS 7 + 本机 PM2：从源码编译 Node（耗时长）**  
+   用 nvm **源码安装**，让 Node 在 **本机 glibc 2.17** 上编译链接（需编译工具链）：
+
+   ```bash
+   sudo yum groupinstall -y "Development Tools"
+   sudo yum install -y python3
+   nvm install -s 23.11.0
+   ```
+
+   `-s` 表示从源码编译，可能要 **几十分钟**。若编译失败，多半是缺少依赖，按报错补装 `openssl-devel` 等。
+
+4. **不推荐：** 手动替换系统 `libc` / 强行拷新 `glibc`，极易把系统弄崩。
+
 ---
 
 ## 十五、安全建议（必读）

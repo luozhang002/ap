@@ -222,6 +222,10 @@ docker compose run --rm oms npx prisma db push
 - 升级 Docker 到较新版本，并确认 `docker-compose.yml` 含 **`host-gateway`** 的 `extra_hosts`。
 - 若仍不行，可查询当前 Docker 网桥 IP，在 `DATABASE_URL` 里临时写该网关 IP（不如 host-gateway 优雅，仅作排查）。
 
+### 4. CentOS 7 上本机装 Node 报 GLIBC / GLIBCXX（与 Docker 无关）
+
+若你在 **CentOS 7** 上用 nvm 装的 **Node 20/23** 无法运行（报 `GLIBC_2.27` 等），是 **系统 glibc 过旧** 导致。**Docker 方案不受影响**：Node 跑在镜像里，不依赖宿主机的旧 glibc。可优先采用本文的 Compose 部署；若坚持用 PM2，见 **`DEPLOY_PM2.md`** 常见问题第 5 条。
+
 ---
 
 ## 十二、可选扩展：MySQL 也放进 Compose

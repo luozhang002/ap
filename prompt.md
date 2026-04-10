@@ -16,3 +16,7 @@
 sheet模板有动，整个数据库的设计和代码处理逻辑也会有改动，模板就是后面这种文件@script/testdata.xlsx ，具体可以看这个里面三个sheet的分析@script/sheet-compare-result.md ,以前的数据表中没用的表数据可以删除，也可以重建表，标的每个字段都要做好描述
 
 6. 现在有个问题我访问：http://localhost:3001/dashboard/visit-map可以定位到当前位置，但是我访问：http://10.10.8.76:3001/dashboard/visit-map  就定位不到当前位置？为什么呢 
+
+7. @oms @crm 后面我需要把这两套系统部署到腾讯云的一台服务器上，我要怎么部署，目前我的机器访问地址是43.142.238.197, 密码：XXXXXXXX，机器型号是下面：Linux VM-0-7-centos 3.10.0-1160.119.1.el7.x86_64 #1 SMP Tue Jun 4 14:43:51 UTC 2024 x86_64 x86_64 x86_64 GNU/Linux
+
+我现在这两套系统都是nextjs的，机器上面已经在3306端口部署了数据库，数据库用户名：root，密码：xxxx。帮我写个详细的部署教程。

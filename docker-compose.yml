@@ -1,0 +1,37 @@
+# AP：OMS + CRM。数据库默认连「宿主机」上的 MySQL（见 docs/DEPLOY_DOCKER.md）
+#
+# 使用前在仓库根目录复制 env 示例并填写：
+#   cp docker-compose.env.example .env
+#
+# 启动：docker compose up -d --build
+# 首次同步表结构：docker compose run --rm oms npx prisma db push
+
+services:
+  oms:
+    build:
+      context: ./oms
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  crm:
+    build:
+      context: ./crm
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_AMAP_KEY: ${NEXT_PUBLIC_AMAP_KEY:-}
+        NEXT_PUBLIC_AMAP_SECURITY_JS_CODE: ${NEXT_PUBLIC_AMAP_SECURITY_JS_CODE:-}
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

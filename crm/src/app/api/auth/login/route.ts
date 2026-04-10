@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { cookieSecureFromRequest } from "@/lib/cookie-secure";
 import { signSessionToken } from "@/lib/jwt";
 
 const COOKIE = "crm_token";
@@ -55,7 +56,7 @@ export async function POST(req: Request) {
 
   res.cookies.set(COOKIE, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: cookieSecureFromRequest(req),
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 7,

@@ -1,7 +1,12 @@
+import { redirect } from "next/navigation";
+import { getCrmSession } from "@/lib/session";
 import { LoginForm } from "./LoginForm";
 import styles from "./page.module.css";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const s = await getCrmSession();
+  if (s) redirect("/dashboard");
+
   return (
     <div className={styles.shell}>
       <div className={styles.mapLayer} aria-hidden />

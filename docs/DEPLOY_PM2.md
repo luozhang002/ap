@@ -321,6 +321,8 @@ pm2 restart ecosystem.config.cjs
 
 检查 **`JWT_SECRET`** 在 `oms/.env` 与 `crm/.env` 是否 **完全一致**（无多余空格、引号一致）。
 
+若使用 **`http://公网IP:端口`** 直连、出现「错密码有提示、对密码进不了后台」，另见：**[DEPLOY_LOGIN_HTTP.md](./DEPLOY_LOGIN_HTTP.md)**。
+
 ### 2. 数据库连接失败
 
 检查 `DATABASE_URL` 里主机是否为 **`127.0.0.1`** 或 **`localhost`**、端口 **3306**、库名 **ap**、用户名密码是否正确；MySQL 是否允许本地连接。

@@ -191,6 +191,8 @@ cd /opt/ap/crm && npm ci
 
 若没有 `package-lock.json`，改用 `npm install`。
 
+若使用 **pnpm**：仓库根目录已有 **`.npmrc`**（`shamefully-hoist=true`），避免在 `next build` 的 TypeScript 检查阶段连续报「Cannot find type definition file for 'estree' / 'json-schema' / …」——这是 pnpm 默认隔离 `node_modules` 与 TS 解析 `@types` 时的常见问题。在 `oms/`、`crm/` 下执行 `pnpm install` 即可继承该配置；**改依赖后建议删掉对应目录的 `node_modules` 再装**，以免旧结构残留。
+
 ### 2. 用 Prisma 把表结构推到 MySQL（只需做一次，或 schema 变更后）
 
 **只在其中一个项目执行即可**（建议 OMS）：

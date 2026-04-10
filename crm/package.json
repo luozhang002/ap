@@ -33,8 +33,6 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
-    "@types/estree": "^1.0.6",
-    "@types/json-schema": "^7.0.15",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^18",

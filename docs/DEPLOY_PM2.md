@@ -50,30 +50,32 @@ sudo apt update
 sudo apt install -y git
 ```
 
-### 2. 安装 Node.js 20（推荐使用 nvm）
+### 2. 安装 Node.js（推荐使用 nvm）
 
-许多系统自带的 Node 版本过旧，建议用 [nvm](https://github.com/nvm-sh/nvm) 安装 **Node 20**：
-
-```bash
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
-```
-
-关闭终端重新打开，或执行：
+许多系统自带的 Node 版本过旧，建议用 **nvm** 管理 Node 版本。国内网络可使用 Gitee 上的 [nvm-cn](https://gitee.com/RubyMetric/nvm-cn) 安装脚本（与官方 nvm 用法一致）：
 
 ```bash
+curl -o- https://gitee.com/RubyMetric/nvm-cn/raw/main/install.sh | bash
 source ~/.bashrc
 ```
 
-然后：
+若你使用 **zsh**，且安装脚本提示写入的是 `~/.zshrc`，请改为 `source ~/.zshrc`，或 **重新打开一个终端窗口**。
+
+**版本怎么选：**
+
+- **与本地开发一致（推荐减少「我本地能跑」差异）**：若你本机是 **v23.11.0**，服务器也固定同一版本即可：
 
 ```bash
-nvm install 20
-nvm use 20
+nvm install 23.11.0
+nvm use 23.11.0
+nvm alias default 23.11.0
 node -v
 npm -v
 ```
 
-应看到 `v20.x.x`。
+应看到 `v23.11.0`。
+
+- **更看重长期维护**：可选用 **Node 20** 或 **Node 22** 等 **LTS**（长期支持）版本，例如 `nvm install 22`、`nvm install 20`。Node **23** 属于当前特性版本，不是 LTS；小团队与本地对齐用 **23.11.0** 完全可行，只要后续升级 Node 时在本地与服务器一起测即可。
 
 ### 3. 全局安装 PM2
 

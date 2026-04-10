@@ -20,6 +20,16 @@
 1. **Docker Engine**（20.10+ 较稳妥，便于 `host-gateway`）。
 2. **Docker Compose**（Docker 新版本自带 `docker compose` 子命令）。
 
+### Node 版本与本地一致（可选）
+
+仓库里 **`oms/Dockerfile`**、**`crm/Dockerfile`** 默认使用 **`node:20-bookworm-slim`**。若你本地是 **Node v23.11.0**，希望容器内与开发机一致，可把两文件首行的 `FROM` 改为例如：
+
+```dockerfile
+FROM node:23.11.0-bookworm-slim
+```
+
+（若官方镜像暂无该精确标签，可用 `node:23-bookworm-slim` 作为折中。）改完后需重新构建：`docker compose build --no-cache`。
+
 **Ubuntu 示例（官方文档为准，此处仅作流程参考）：**
 
 ```bash

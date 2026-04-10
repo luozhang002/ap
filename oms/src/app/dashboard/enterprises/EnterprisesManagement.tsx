@@ -5,6 +5,12 @@ import {
   type EnterpriseImportStreamEvent,
   readNdjsonLines,
 } from "@/lib/enterprise-import-ndjson";
+
+/** 与 NDJSON `type: "done"` 的 `batch` 一致，避免部分 TS 版本将 `doneBatches.at(-1)` 推断为 `never` */
+type ImportDoneBatch = Extract<
+  EnterpriseImportStreamEvent,
+  { type: "done" }
+>["batch"];
 import { parseJsonBody } from "@/lib/fetch-json";
 import styles from "./EnterprisesManagement.module.css";
 
@@ -300,13 +306,7 @@ export function EnterprisesManagement() {
     setImportProgress({ percent: 0, message: "连接服务器…", step: "init" });
 
     let streamError: string | null = null;
-    let doneBatch: {
-      id: number;
-      totalRows: number;
-      rowCountYilei: number;
-      rowCountFeichanggui: number;
-      rowCountJieliebang: number;
-    } | null = null;
+    const doneBatches: ImportDoneBatch[] = [];
 
     try {
       const fd = new FormData();
@@ -342,7 +342,7 @@ export function EnterprisesManagement() {
         } else if (ev.type === "error") {
           streamError = ev.message;
         } else if (ev.type === "done") {
-          doneBatch = ev.batch;
+          doneBatches.push(ev.batch);
         }
       });
 
@@ -350,12 +350,15 @@ export function EnterprisesManagement() {
         showError(streamError);
         return;
       }
+      const doneBatch =
+        doneBatches.length > 0
+          ? doneBatches[doneBatches.length - 1]
+          : undefined;
       if (doneBatch) {
-        const b = doneBatch;
         showSuccess(
-          `导入成功：共 ${b.totalRows} 行（一类 ${b.rowCountYilei} / 非常规 ${b.rowCountFeichanggui} / 接力棒 ${b.rowCountJieliebang}）`
+          `导入成功：共 ${doneBatch.totalRows} 行（一类 ${doneBatch.rowCountYilei} / 非常规 ${doneBatch.rowCountFeichanggui} / 接力棒 ${doneBatch.rowCountJieliebang}）`
         );
-        const newBatchId = String(b.id);
+        const newBatchId = String(doneBatch.id);
         setBatchId(newBatchId);
         setPage(1);
         await loadBatches();

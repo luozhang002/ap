@@ -2,6 +2,8 @@
 
 面向第一次用 Docker 的同学。本文使用仓库里的 **`docker-compose.yml`**，一次性拉起 **OMS** 与 **CRM** 两个容器；**MySQL 默认假设装在宿主机上**（与多数「数据库已在 3306」的场景一致）。若你希望 MySQL 也放进 Compose，见文末「可选扩展」。
 
+**默认环境（推荐）：** 宿主机为 **Ubuntu Server 22.04 LTS 64 位**（腾讯云 **UEFI 版** 与普通 64 位在 Docker 使用上无区别）。SSH 登录用户一般为 **`ubuntu`**（见 `DEPLOY_PM2.md` 说明）。
+
 ---
 
 ## 一、你将得到什么？
@@ -20,6 +22,31 @@
 1. **Docker Engine**（20.10+ 较稳妥，便于 `host-gateway`）。
 2. **Docker Compose**（Docker 新版本自带 `docker compose` 子命令）。
 
+### 在 Ubuntu 22.04 上安装 Docker（推荐）
+
+请以 **Docker 官方文档** 为准：**[Install Docker Engine on Ubuntu](https://docs.docker.com/engine/install/ubuntu/)**（选择与你 **Ubuntu 22.04 Jammy** 对应的版本）。概要步骤（版本号可能随官方更新变化）：
+
+```bash
+sudo apt update
+sudo apt install -y ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "${VERSION_CODENAME:-$VERSION_ID}") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+sudo usermod -aG docker "$USER"
+```
+
+执行 `usermod` 后 **重新登录 SSH**（或 `newgrp docker`），再验证：
+
+```bash
+docker run --rm hello-world
+docker compose version
+```
+
+**其它发行版**：见 Docker 官方文档对应安装页；**旧版 CentOS 7** 建议升级系统或换 Ubuntu 22.04，内核过旧时 Docker 可能不稳定。
+
 ### Node 版本与本地一致（可选）
 
 仓库里 **`oms/Dockerfile`**、**`crm/Dockerfile`** 默认使用 **`node:20-bookworm-slim`**。若你本地是 **Node v23.11.0**，希望容器内与开发机一致，可把两文件首行的 `FROM` 改为例如：
@@ -29,28 +56,6 @@ FROM node:23.11.0-bookworm-slim
 ```
 
 （若官方镜像暂无该精确标签，可用 `node:23-bookworm-slim` 作为折中。）改完后需重新构建：`docker compose build --no-cache`。
-
-**Ubuntu 示例（官方文档为准，此处仅作流程参考）：**
-
-```bash
-sudo apt update
-sudo apt install -y ca-certificates curl
-sudo install -m 0755 -d /etc/apt/keyrings
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-sudo chmod a+r /etc/apt/keyrings/docker.asc
-# 以下一行需按你系统版本换源，详见 Docker 官方文档
-sudo apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
-sudo usermod -aG docker "$USER"
-```
-
-执行 `usermod` 后 **重新登录 SSH**，再试：
-
-```bash
-docker run --rm hello-world
-docker compose version
-```
-
-**CentOS 7**：可参考 Docker 官方文档用仓库安装；若内核过旧，长期建议升级到更新系统。
 
 ---
 
@@ -179,6 +184,7 @@ docker compose run --rm oms npx prisma db push
 
 - **云安全组**：放行 **3000**、**3001**（若前面加 Nginx，则主要放行 **80/443**）。
 - **不要**对公网放行 **3306**。
+- **Ubuntu 本机 ufw**（若已启用）：与 `DEPLOY_PM2.md` 相同，需放行 **22** 及业务端口，或按需放行 **80/443**；`sudo ufw status` 查看状态。
 
 ---
 
@@ -222,9 +228,11 @@ docker compose run --rm oms npx prisma db push
 - 升级 Docker 到较新版本，并确认 `docker-compose.yml` 含 **`host-gateway`** 的 `extra_hosts`。
 - 若仍不行，可查询当前 Docker 网桥 IP，在 `DATABASE_URL` 里临时写该网关 IP（不如 host-gateway 优雅，仅作排查）。
 
-### 4. CentOS 7 上本机装 Node 报 GLIBC / GLIBCXX（与 Docker 无关）
+### 4. 宿主机上本机装 Node 报 GLIBC / GLIBCXX（与 Docker 无关）
 
-若你在 **CentOS 7** 上用 nvm 装的 **Node 20/23** 无法运行（报 `GLIBC_2.27` 等），是 **系统 glibc 过旧** 导致。**Docker 方案不受影响**：Node 跑在镜像里，不依赖宿主机的旧 glibc。可优先采用本文的 Compose 部署；若坚持用 PM2，见 **`DEPLOY_PM2.md`** 常见问题第 5 条。
+**Ubuntu 22.04** 上按 **`DEPLOY_PM2.md`** 使用 nvm 安装 **官方预编译 Node**，一般 **不会** 出现此类问题。
+
+若宿主机仍是 **CentOS 7 等旧系统**，本机 nvm 装的 Node 可能因 **glibc 过旧** 无法运行。**Docker 方案不受影响**：Node 跑在镜像内。**宿主机坚持用 PM2** 时的处理见 **`DEPLOY_PM2.md`** 常见问题第 5 条。
 
 ---
 

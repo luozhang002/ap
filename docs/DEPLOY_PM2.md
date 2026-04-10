@@ -1,6 +1,10 @@
 # 部署指南：PM2（从零到上线）
 
-面向第一次部署的同学：按顺序做即可。假设你有一台 **Linux 服务器**（例如腾讯云 CentOS / Ubuntu），能通过 **SSH** 登录，并且 **MySQL 已安装**、监听 **3306**。
+面向第一次部署的同学：按顺序做即可。
+
+**默认环境（推荐）：** **Ubuntu Server 22.04 LTS 64 位**。在腾讯云上若实例类型要求 **UEFI**，选择 **「Ubuntu Server 22.04 LTS 64 位 UEFI 版」** 即可，**部署命令与普通 64 位一致**。Ubuntu 22.04 自带 **glibc 足够新**，可正常使用 **nvm 安装的 Node 官方预编译包**（Node 20+ / 23 等），无需再踩旧版 CentOS 的 GLIBC 问题。
+
+假设你已通过 **SSH** 登录服务器，且 **MySQL 已安装**、监听 **3306**。腾讯云 Ubuntu 公共镜像默认登录用户多为 **`ubuntu`**（密钥登录）；若需 **root**，请用 `sudo -i` 或在控制台开启 root 密码登录（以云厂商说明为准）。
 
 ---
 
@@ -32,23 +36,21 @@
 用终端（Mac/Linux 用自带终端，Windows 可用 PowerShell 或安装 OpenSSH）：
 
 ```bash
-ssh 你的用户名@服务器IP
+ssh ubuntu@服务器IP
 ```
+
+（若你使用 **root** 或其它账号，将 `ubuntu` 换成实际用户名。）
 
 ### 1. 安装 Git（若还没有）
 
-**CentOS 7：**
-
-```bash
-sudo yum install -y git
-```
-
-**Ubuntu / Debian：**
+**Ubuntu 22.04：**
 
 ```bash
 sudo apt update
 sudo apt install -y git
 ```
+
+其它发行版示例：**CentOS** 可用 `sudo yum install -y git`；**Debian** 与 Ubuntu 相同。
 
 ### 2. 安装 Node.js（推荐使用 nvm）
 
@@ -260,7 +262,16 @@ pm2 save
 若打不开，请检查：
 
 1. **腾讯云（或其它云）安全组**：是否放行 **入站** TCP **3000**、**3001**（若只用 Nginx 反代则放行 80/443）。
-2. 服务器本机防火墙（如 `firewalld`、`ufw`）是否放行对应端口。
+2. **本机防火墙（Ubuntu 常用 ufw）**：先看是否启用：`sudo ufw status`。若为 **active**，需放行端口，例如：
+
+   ```bash
+   sudo ufw allow 22/tcp
+   sudo ufw allow 3000/tcp
+   sudo ufw allow 3001/tcp
+   sudo ufw reload
+   ```
+
+   若 **ufw 为 inactive**，通常只需安全组放行即可；**不要**在未熟悉规则时盲目执行 `sudo ufw enable`，以免误挡 SSH **22** 端口。
 
 ---
 
@@ -327,20 +338,19 @@ sudo ss -tlnp | grep 3000
 
 关闭占用进程或修改 `package.json` 里端口（需同步改防火墙与访问地址）。
 
-### 5. CentOS 7 上执行 `node -v` 报 `GLIBC_2.27` / `GLIBCXX_3.4.21` / `CXXABI_1.3.9` 等
+### 5. 执行 `node -v` 报 `GLIBC_2.27` / `GLIBCXX_3.4.21` / `CXXABI_1.3.9` 等
 
-**原因：** CentOS 7 自带的 **glibc 版本较旧（约 2.17）**。通过 nvm 下载的 **Node 官方预编译包**（如 Node 18+、20、23）是针对 **较新 glibc** 的系统打的，在 CentOS 7 上运行就会报上述符号找不到。
+**Ubuntu 22.04 LTS：** 按本文用 **nvm 安装官方预编译 Node**，一般 **不会** 出现上述错误。
 
-**可行做法（按推荐顺序）：**
+**若仍使用旧系统（如 CentOS 7）：** 其 **glibc 过旧（约 2.17）**，与 Node 官方预编译包不兼容，易报上述错。**可行做法（按推荐顺序）：**
 
-1. **换系统镜像（最省心）**  
-   新机器或重装时改用 **Rocky Linux 8/9、AlmaLinux 8/9、Ubuntu 22.04** 等，再按本文安装 nvm / Node，一般不再出现此类错误。
+1. **重装 / 换机为 Ubuntu 22.04 等较新系统（推荐）**  
+   与本文默认环境一致，安装 nvm / Node 即可。
 
-2. **继续用 CentOS 7 时：用 Docker 跑 Node（推荐）**  
-   宿主机只装 Docker，应用在 **镜像内** 使用较新的 Linux 与 Node，不依赖 CentOS 7 的 glibc。见 **`DEPLOY_DOCKER.md`**。
+2. **继续用 CentOS 7：用 Docker 跑应用**  
+   Node 跑在容器镜像内，不依赖宿主机旧 glibc。见 **`DEPLOY_DOCKER.md`**。
 
-3. **继续用 CentOS 7 + 本机 PM2：从源码编译 Node（耗时长）**  
-   用 nvm **源码安装**，让 Node 在 **本机 glibc 2.17** 上编译链接（需编译工具链）：
+3. **继续用 CentOS 7 + 本机 PM2：从源码编译 Node**  
 
    ```bash
    sudo yum groupinstall -y "Development Tools"
@@ -348,9 +358,19 @@ sudo ss -tlnp | grep 3000
    nvm install -s 23.11.0
    ```
 
-   `-s` 表示从源码编译，可能要 **几十分钟**。若编译失败，多半是缺少依赖，按报错补装 `openssl-devel` 等。
+   `-s` 表示源码编译，可能 **数十分钟**；缺依赖时按报错安装 `openssl-devel` 等。
 
-4. **不推荐：** 手动替换系统 `libc` / 强行拷新 `glibc`，极易把系统弄崩。
+4. **不推荐：** 手动替换系统 `libc` / 强行拷新 `glibc`。
+
+### 6. SSH 提示 `REMOTE HOST IDENTIFICATION HAS CHANGED`
+
+常见于 **重装系统 / 更换镜像** 后服务器 SSH 主机密钥变化。在**你自己的电脑**上执行：
+
+```bash
+ssh-keygen -R 你的服务器IP
+```
+
+再重新 `ssh` 连接，输入 `yes` 接受新指纹即可。
 
 ---
 

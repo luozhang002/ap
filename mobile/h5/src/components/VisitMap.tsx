@@ -2,13 +2,16 @@
 
 import type { Dispatch, MutableRefObject, SetStateAction } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Alert, Button, Card, Segmented, Select, Space, Tag, message } from "antd";
+import { Alert, Button, Card, Flex, Segmented, Select, Space, Tag, Typography, message } from "antd";
 import type { Customer } from "@/types/customer";
 import { useVisitStore } from "@/store/visitStore";
 import { getCustomers, markVisited } from "@/services/customerApi";
 
 const DEFAULT_CENTER: [number, number] = [116.397428, 39.90923];
 const LOCATE_MSG_KEY = "visit-map-locate";
+
+/** 未拜访路线规划最多站点数，序号 1～4 */
+const MAX_ROUTE_STOPS = 4;
 
 /** 与 mock 客户同属北京地区，用于开发/桌面 Safari 等无法拿到 GPS 时的距离筛选参考点 */
 const DEMO_REFERENCE_LNG = DEFAULT_CENTER[0];
@@ -47,13 +50,58 @@ export default function VisitMap() {
   const mapInstanceRef = useRef<any>(null);
   const markerRef = useRef<any[]>([]);
   const userMarkerRef = useRef<any | null>(null);
+  const drivingRef = useRef<any | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [myPosition, setMyPosition] = useState<{ lng: number; lat: number } | null>(null);
   const [locationHint, setLocationHint] = useState(false);
+  /** 拜访路线顺序（仅「未拜访」筛选下使用），对应地图标注 1、2、3、4 */
+  const [routeStopIds, setRouteStopIds] = useState<string[]>([]);
+
+  const myLng = myPosition?.lng;
+  const myLat = myPosition?.lat;
 
   const { radiusKm, statusFilter, setRadiusKm, setStatusFilter } = useVisitStore();
+
+  const unvisitedWithCoords = useMemo(
+    () =>
+      customers.filter(
+        (c) => c.visitStatus === "UNVISITED" && c.latitude != null && c.longitude != null
+      ),
+    [customers]
+  );
+
+  const routeResolvedStops = useMemo(() => {
+    return routeStopIds
+      .map((id) => customers.find((c) => c.id === id))
+      .filter((c): c is Customer => c != null && c.latitude != null && c.longitude != null);
+  }, [routeStopIds, customers]);
+
+  /**
+   * 驾车路线 effect 的唯一依赖：聚合 mapReady / 筛选 / 定位 / 站点。
+   * 避免在 useEffect 第二参里写可变长度的依赖列表，防止热更新与定位切换时出现「dependency array changed size」告警。
+   */
+  const drivingEffectSignature = useMemo(() => {
+    const pathKey = routeResolvedStops
+      .map((c) => `${c.id}:${c.latitude}:${c.longitude}`)
+      .join("|");
+    const loc = myLng != null && myLat != null ? `${myLng},${myLat}` : "";
+    return `${mapReady ? 1 : 0}|${statusFilter}|${loc}|${pathKey}`;
+  }, [mapReady, statusFilter, myLng, myLat, routeResolvedStops]);
+
+  const addToRoute = useCallback((customerId: string) => {
+    setRouteStopIds((prev) => {
+      if (prev.includes(customerId) || prev.length >= MAX_ROUTE_STOPS) return prev;
+      return [...prev, customerId];
+    });
+  }, []);
+
+  const removeRouteAt = useCallback((index: number) => {
+    setRouteStopIds((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const clearRoute = useCallback(() => setRouteStopIds([]), []);
 
   const amapKey = process.env.NEXT_PUBLIC_AMAP_KEY || "efdef4c613233f6e50b3f5f9ef48486b";
   // 高德 JS API 2.0 必须配置安全密钥，否则瓦片不加载（灰底网格）。控制台「应用」→「密钥」里与 Key 配套的安全密钥。
@@ -183,7 +231,7 @@ export default function VisitMap() {
       const AMap = await AMapLoader.load({
         key: amapKey,
         version: "2.0",
-        plugins: ["AMap.Geolocation"],
+        plugins: ["AMap.Geolocation", "AMap.Driving"],
       });
 
       if (cancelled || !mapRef.current || mapInstanceRef.current) return;
@@ -235,11 +283,25 @@ export default function VisitMap() {
           }
           userMarkerRef.current = null;
         }
+        if (drivingRef.current) {
+          try {
+            drivingRef.current.clear();
+          } catch {
+            /* ignore */
+          }
+          drivingRef.current = null;
+        }
         m.destroy();
       }
       mapInstanceRef.current = null;
     };
   }, [amapKey, amapSecurityJsCode, requestLocation]);
+
+  useEffect(() => {
+    if (statusFilter !== "unvisited") {
+      setRouteStopIds([]);
+    }
+  }, [statusFilter]);
 
   useEffect(() => {
     if (!mapReady || myPosition) {
@@ -276,9 +338,20 @@ export default function VisitMap() {
 
     customers.forEach((c) => {
       if (c.latitude == null || c.longitude == null) return;
+      const routeIdx = statusFilter === "unvisited" ? routeStopIds.indexOf(c.id) : -1;
+      const label =
+        routeIdx >= 0
+          ? {
+              content: `<span style="display:inline-block;min-width:22px;height:22px;line-height:22px;text-align:center;background:#1677ff;color:#fff;border-radius:50%;font-size:12px;font-weight:700;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)">${routeIdx + 1}</span>`,
+              direction: "top",
+              offset: new AMap.Pixel(0, -8),
+            }
+          : undefined;
       const marker = new AMap.Marker({
         position: [c.longitude, c.latitude],
         title: c.name,
+        label,
+        zIndex: routeIdx >= 0 ? 160 : 100,
         icon:
           c.visitStatus === "VISITED"
             ? "https://webapi.amap.com/theme/v1.3/markers/n/mark_r.png"
@@ -288,7 +361,79 @@ export default function VisitMap() {
       map.add(marker);
       markerRef.current.push(marker);
     });
-  }, [customers, mapReady]);
+  }, [customers, mapReady, routeStopIds, statusFilter]);
+
+  useEffect(() => {
+    // 依赖列表仅为 [drivingEffectSignature]，见上方 useMemo 说明
+    const map = mapInstanceRef.current;
+    if (!map || !mapReady) return;
+    const AMap = (window as any).AMap;
+    if (!AMap) return;
+
+    const clearDriving = () => {
+      if (drivingRef.current) {
+        try {
+          drivingRef.current.clear();
+        } catch {
+          /* ignore */
+        }
+        drivingRef.current = null;
+      }
+    };
+
+    const hasMyLocation = myLng != null && myLat != null;
+    const minStops = hasMyLocation ? 1 : 2;
+    if (statusFilter !== "unvisited" || routeResolvedStops.length < minStops) {
+      clearDriving();
+      return;
+    }
+
+    const stopLngLats = routeResolvedStops.map(
+      (c) => new AMap.LngLat(c.longitude as number, c.latitude as number)
+    );
+
+    let origin: any;
+    let destination: any;
+    let opt: { waypoints?: any[] } = {};
+
+    if (hasMyLocation) {
+      origin = new AMap.LngLat(myLng, myLat);
+      destination = stopLngLats[stopLngLats.length - 1];
+      const via = stopLngLats.slice(0, -1);
+      if (via.length > 0) {
+        opt = { waypoints: via };
+      }
+    } else {
+      origin = stopLngLats[0];
+      destination = stopLngLats[stopLngLats.length - 1];
+      const mid = stopLngLats.slice(1, -1);
+      if (mid.length > 0) {
+        opt = { waypoints: mid };
+      }
+    }
+
+    let cancelled = false;
+
+    AMap.plugin(["AMap.Driving"], () => {
+      if (cancelled || mapInstanceRef.current !== map) return;
+      clearDriving();
+      const driving = new AMap.Driving({
+        map,
+        hideMarkers: true,
+      });
+      drivingRef.current = driving;
+      driving.search(origin, destination, opt, (status: string) => {
+        if (status !== "complete" && !cancelled) {
+          message.warning("驾车路线规划未返回有效路径，可稍后再试或调整站点顺序");
+        }
+      });
+    });
+
+    return () => {
+      cancelled = true;
+      clearDriving();
+    };
+  }, [drivingEffectSignature]);
 
   const statusText = useMemo(
     () => (selectedCustomer?.visitStatus === "VISITED" ? "已拜访" : "未拜访"),
@@ -370,6 +515,55 @@ export default function VisitMap() {
         />
       </Space>
 
+      {statusFilter === "unvisited" && (
+        <Card size="small" title="拜访路线规划">
+          <Flex vertical gap={12}>
+            <Typography.Text type="secondary" style={{ fontSize: 13 }}>
+              从未拜访客户中按顺序选择最多 4 个站点，地图上以 1～4 标注，并沿道路绘制驾车路径。
+              {myPosition
+                ? " 已获取当前位置时，路线从您的位置出发依次经过各站。"
+                : " 当前未定位到您时，需至少选择 2 个站点才能连线；定位成功后可从您的位置画到第 1 站。"}
+            </Typography.Text>
+            {routeStopIds.length > 0 ? (
+              <Flex wrap="wrap" gap={8}>
+                {routeStopIds.map((id, i) => {
+                  const c = customers.find((x) => x.id === id);
+                  return (
+                    <Tag key={`${id}-${i}`} closable onClose={() => removeRouteAt(i)} color="blue">
+                      {i + 1}. {c?.name ?? id}
+                    </Tag>
+                  );
+                })}
+              </Flex>
+            ) : (
+              <Typography.Text type="secondary">尚未添加站点，点击下方客户加入路线</Typography.Text>
+            )}
+            <Flex wrap="wrap" gap={8}>
+              {unvisitedWithCoords.map((c) => {
+                const inRoute = routeStopIds.includes(c.id);
+                if (inRoute) return null;
+                return (
+                  <Button
+                    key={c.id}
+                    size="small"
+                    type="primary"
+                    disabled={routeStopIds.length >= MAX_ROUTE_STOPS}
+                    onClick={() => addToRoute(c.id)}
+                  >
+                    + {c.name}
+                  </Button>
+                );
+              })}
+            </Flex>
+            <div>
+              <Button size="small" danger onClick={clearRoute} disabled={routeStopIds.length === 0}>
+                清空路线
+              </Button>
+            </div>
+          </Flex>
+        </Card>
+      )}
+
       <div ref={mapRef} style={{ width: "100%", height: 420, borderRadius: 12, overflow: "hidden" }} />
 
       {selectedCustomer && (
@@ -381,23 +575,31 @@ export default function VisitMap() {
             <Tag color={selectedCustomer.visitStatus === "VISITED" ? "red" : "blue"}>{statusText}</Tag>
           </p>
           {selectedCustomer.visitStatus === "UNVISITED" && (
-            <Button
-              type="primary"
-              onClick={async () => {
-                const updated = await markVisited(selectedCustomer.id);
-                if (!updated) return;
-                setSelectedCustomer(updated);
-                const refreshed = await getCustomers({
-                  status: statusFilter === "all" ? undefined : statusFilter,
-                  radiusKm,
-                  centerLat: myPosition?.lat,
-                  centerLng: myPosition?.lng,
-                });
-                setCustomers(refreshed);
-              }}
-            >
-              标记为已拜访
-            </Button>
+            <Flex vertical gap={8} style={{ marginTop: 8 }}>
+              {statusFilter === "unvisited" &&
+                routeStopIds.length < MAX_ROUTE_STOPS &&
+                !routeStopIds.includes(selectedCustomer.id) && (
+                  <Button onClick={() => addToRoute(selectedCustomer.id)}>加入拜访路线（下一序号）</Button>
+                )}
+              <Button
+                type="primary"
+                onClick={async () => {
+                  const updated = await markVisited(selectedCustomer.id);
+                  if (!updated) return;
+                  setRouteStopIds((prev) => prev.filter((id) => id !== selectedCustomer.id));
+                  setSelectedCustomer(updated);
+                  const refreshed = await getCustomers({
+                    status: statusFilter === "all" ? undefined : statusFilter,
+                    radiusKm,
+                    centerLat: myPosition?.lat,
+                    centerLng: myPosition?.lng,
+                  });
+                  setCustomers(refreshed);
+                }}
+              >
+                标记为已拜访
+              </Button>
+            </Flex>
           )}
         </Card>
       )}

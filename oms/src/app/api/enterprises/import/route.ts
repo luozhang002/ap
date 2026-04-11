@@ -1,4 +1,4 @@
-import type { EnterpriseRecord, Prisma } from "@prisma/client";
+import type { EnterpriseRecord } from "@prisma/client";
 import {
   dedupeWithinFileLastWins,
   loadExistingByCustomerKeys,
@@ -139,77 +139,78 @@ export async function POST(req: Request) {
           message: `准备写入：新增 ${toInsert.length} 行，更新 ${toUpdate.length} 行，跳过 ${skipped} 行（模式：${importMode}）`,
         });
 
-        const batch = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-          const b = await tx.enterpriseImportBatch.create({
-            data: {
-              fileName: originalName,
-              uploadedByUserId: admin.id,
-              rowCountYilei,
-              rowCountFeichanggui,
-              rowCountJieliebang,
-            },
-          });
+        /**
+         * 大批量导入若包在单个 interactive transaction 内，易超过 Prisma/MySQL/代理
+         * 的事务时长上限（P2028 Transaction not found）。改为：先建批次，再分块
+         * createMany / update（每批独立提交）。
+         */
+        const batch = await prisma.enterpriseImportBatch.create({
+          data: {
+            fileName: originalName,
+            uploadedByUserId: admin.id,
+            rowCountYilei,
+            rowCountFeichanggui,
+            rowCountJieliebang,
+          },
+        });
 
+        push({
+          type: "progress",
+          percent: 40,
+          step: "batch_created",
+          message: `已创建导入批次 #${batch.id}`,
+        });
+
+        const withBatch = toInsert.map((r) => ({
+          ...r,
+          batchId: batch.id,
+        }));
+
+        const parts = chunk(withBatch, CREATE_CHUNK);
+        const totalParts = parts.length;
+        const updateParts = chunk(toUpdate, UPDATE_CHUNK);
+        const totalSteps = Math.max(1, totalParts + updateParts.length);
+        let stepIdx = 0;
+
+        for (let i = 0; i < totalParts; i++) {
+          await prisma.enterpriseRecord.createMany({ data: parts[i] });
+          stepIdx += 1;
           push({
             type: "progress",
-            percent: 40,
-            step: "batch_created",
-            message: `已创建导入批次 #${b.id}`,
+            percent: Math.min(94, 40 + Math.round((stepIdx / totalSteps) * 54)),
+            step: "insert",
+            message: `插入：第 ${i + 1} / ${totalParts} 批`,
+            currentChunk: i + 1,
+            totalChunks: totalParts,
           });
+        }
 
-          const withBatch = toInsert.map((r) => ({
-            ...r,
-            batchId: b.id,
-          }));
-
-          const parts = chunk(withBatch, CREATE_CHUNK);
-          const totalParts = parts.length;
-          const updateParts = chunk(toUpdate, UPDATE_CHUNK);
-          const totalSteps = Math.max(1, totalParts + updateParts.length);
-          let stepIdx = 0;
-
-          for (let i = 0; i < totalParts; i++) {
-            await tx.enterpriseRecord.createMany({ data: parts[i] });
-            stepIdx += 1;
-            push({
-              type: "progress",
-              percent: Math.min(94, 40 + Math.round((stepIdx / totalSteps) * 54)),
-              step: "insert",
-              message: `插入：第 ${i + 1} / ${totalParts} 批`,
-              currentChunk: i + 1,
-              totalChunks: totalParts,
-            });
-          }
-
-          for (let i = 0; i < updateParts.length; i++) {
-            const group = updateParts[i];
-            await Promise.all(
-              group.map(({ id, data }) => {
-                const { sheetKind, rowIndex, ...rest } = data;
-                return tx.enterpriseRecord.update({
-                  where: { id },
-                  data: {
-                    ...rest,
-                    batchId: b.id,
-                    sheetKind,
-                    rowIndex,
-                  },
-                });
-              })
-            );
-            stepIdx += 1;
-            push({
-              type: "progress",
-              percent: Math.min(97, 40 + Math.round((stepIdx / totalSteps) * 54)),
-              step: "insert",
-              message: `覆盖更新已存在企业：第 ${i + 1} / ${updateParts.length} 批`,
-              currentChunk: i + 1,
-              totalChunks: updateParts.length,
-            });
-          }
-
-          return b;
-        });
+        for (let i = 0; i < updateParts.length; i++) {
+          const group = updateParts[i];
+          await Promise.all(
+            group.map(({ id, data }) => {
+              const { sheetKind, rowIndex, ...rest } = data;
+              return prisma.enterpriseRecord.update({
+                where: { id },
+                data: {
+                  ...rest,
+                  batchId: batch.id,
+                  sheetKind,
+                  rowIndex,
+                },
+              });
+            })
+          );
+          stepIdx += 1;
+          push({
+            type: "progress",
+            percent: Math.min(97, 40 + Math.round((stepIdx / totalSteps) * 54)),
+            step: "insert",
+            message: `覆盖更新已存在企业：第 ${i + 1} / ${updateParts.length} 批`,
+            currentChunk: i + 1,
+            totalChunks: updateParts.length,
+          });
+        }
 
         push({
           type: "done",

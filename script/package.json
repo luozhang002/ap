@@ -2,6 +2,9 @@
   "name": "script",
   "private": true,
   "type": "module",
+  "scripts": {
+    "generate-testdata": "node generate-testdata.mjs"
+  },
   "dependencies": {
     "xlsx": "^0.18.5"
   }

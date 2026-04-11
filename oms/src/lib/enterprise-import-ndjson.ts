@@ -34,13 +34,31 @@ export type EnterpriseImportStreamEvent =
 
 export async function readNdjsonLines(
   body: ReadableStream<Uint8Array> | null,
-  onLine: (obj: EnterpriseImportStreamEvent) => void
+  onLine: (obj: EnterpriseImportStreamEvent) => void,
+  /** 与 fetch 共用同一 AbortController，取消时主动 reader.cancel()，避免长时间卡在 read() */
+  signal?: AbortSignal
 ): Promise<void> {
   if (!body) return;
   const reader = body.getReader();
   const dec = new TextDecoder();
   let buf = "";
+
+  const onAbort = () => {
+    reader.cancel().catch(() => undefined);
+  };
+  if (signal) {
+    if (signal.aborted) {
+      onAbort();
+      throw new DOMException("Aborted", "AbortError");
+    }
+    signal.addEventListener("abort", onAbort);
+  }
+
+  try {
   while (true) {
+    if (signal?.aborted) {
+      throw new DOMException("Aborted", "AbortError");
+    }
     const { done, value } = await reader.read();
     if (done) break;
     buf += dec.decode(value, { stream: true });
@@ -62,6 +80,11 @@ export async function readNdjsonLines(
       onLine(JSON.parse(rest) as EnterpriseImportStreamEvent);
     } catch {
       /* ignore */
+    }
+  }
+  } finally {
+    if (signal) {
+      signal.removeEventListener("abort", onAbort);
     }
   }
 }

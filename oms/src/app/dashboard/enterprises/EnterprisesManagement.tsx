@@ -218,6 +218,7 @@ export function EnterprisesManagement() {
     message: string;
     step: string;
     chunkLabel?: string;
+    indeterminate?: boolean;
   } | null>(null);
   const [batches, setBatches] = useState<BatchRow[]>([]);
   const [records, setRecords] = useState<RecordRow[]>([]);
@@ -432,7 +433,12 @@ export function EnterprisesManagement() {
     importAbortRef.current = ac;
 
     setImporting(true);
-    setImportProgress({ percent: 0, message: "连接服务器…", step: "init" });
+    setImportProgress({
+      percent: 0,
+      message: "连接服务器…",
+      step: "init",
+      indeterminate: false,
+    });
 
     let streamError: string | null = null;
     const doneBatches: ImportDoneBatch[] = [];
@@ -459,24 +465,29 @@ export function EnterprisesManagement() {
         return;
       }
 
-      await readNdjsonLines(res.body, (ev: EnterpriseImportStreamEvent) => {
-        if (ev.type === "progress") {
-          setImportProgress({
-            percent: Math.min(100, Math.max(0, Math.round(ev.percent))),
-            message: ev.message,
-            step: ev.step,
-            chunkLabel:
-              ev.currentChunk != null && ev.totalChunks != null
-                ? `第 ${ev.currentChunk} / ${ev.totalChunks} 批`
-                : undefined,
-          });
-        } else if (ev.type === "error") {
-          streamError = ev.message;
-        } else if (ev.type === "done") {
-          doneBatches.push(ev.batch);
-          if (ev.stats) lastStats = ev.stats as ImportDoneStats;
-        }
-      });
+      await readNdjsonLines(
+        res.body,
+        (ev: EnterpriseImportStreamEvent) => {
+          if (ev.type === "progress") {
+            setImportProgress({
+              percent: Math.min(100, Math.max(0, Math.round(ev.percent))),
+              message: ev.message,
+              step: ev.step,
+              indeterminate: false,
+              chunkLabel:
+                ev.currentChunk != null && ev.totalChunks != null
+                  ? `第 ${ev.currentChunk} / ${ev.totalChunks} 批`
+                  : undefined,
+            });
+          } else if (ev.type === "error") {
+            streamError = ev.message;
+          } else if (ev.type === "done") {
+            doneBatches.push(ev.batch);
+            if (ev.stats) lastStats = ev.stats as ImportDoneStats;
+          }
+        },
+        ac.signal
+      );
 
       if (streamError) {
         showError(streamError);
@@ -498,11 +509,11 @@ export function EnterprisesManagement() {
         showSuccess(
           `${statLine}本批次共 ${doneBatch.totalRows} 行（一类 ${doneBatch.rowCountYilei} / 非常规 ${doneBatch.rowCountFeichanggui} / 接力棒 ${doneBatch.rowCountJieliebang}）`
         );
-        const newBatchId = String(doneBatch.id);
-        setBatchId(newBatchId);
+        /** 勿自动筛选到新批次：否则列表请求带 batchId，只能看到本批（如 1 条），历史批次数据被隐藏，易误以为丢失 */
+        setBatchId("");
         setPage(1);
         await loadBatches();
-        await fetchRecordsForPage(1, { batchIdOverride: newBatchId });
+        await fetchRecordsForPage(1, { batchIdOverride: "" });
       }
     } catch (e) {
       const aborted =
@@ -525,9 +536,19 @@ export function EnterprisesManagement() {
     const file = fileList?.[0];
     if (!file) return;
 
+    importAbortRef.current?.abort();
+    const ac = new AbortController();
+    importAbortRef.current = ac;
+
     pendingImportFileRef.current = file;
     setImportAnalyzing(true);
-    setImportProgress({ percent: 0, message: "分析 Excel 与库内企业名称…", step: "prepare_db" });
+    setImportProgress({
+      percent: 0,
+      message:
+        "① 解析 Excel ② 查询库内是否已有同名企业 ③ 比对字段差异。十万行级可能需数分钟。",
+      step: "prepare_db",
+      indeterminate: true,
+    });
 
     try {
       const fd = new FormData();
@@ -535,6 +556,7 @@ export function EnterprisesManagement() {
       const res = await fetch("/api/enterprises/import/analyze", {
         method: "POST",
         body: fd,
+        signal: ac.signal,
       });
       const data = await parseJsonBody<ImportAnalyzeResponse & { error?: string }>(res);
       if (!res.ok) {
@@ -553,12 +575,23 @@ export function EnterprisesManagement() {
         return;
       }
 
+      setImportAnalyzing(false);
+      setImportProgress(null);
       await runImportWithMode(file, "skip_existing");
     } catch (e) {
-      showError(e instanceof Error ? e.message : "分析失败");
+      const aborted =
+        e instanceof DOMException
+          ? e.name === "AbortError"
+          : e instanceof Error && e.name === "AbortError";
+      if (aborted) {
+        showError("已取消分析");
+      } else {
+        showError(e instanceof Error ? e.message : "分析失败");
+      }
     } finally {
       setImportAnalyzing(false);
       setImportProgress(null);
+      if (importAbortRef.current === ac) importAbortRef.current = null;
     }
   };
 
@@ -1314,27 +1347,47 @@ export function EnterprisesManagement() {
               {importAnalyzing ? "正在分析 Excel…" : "数据导入中"}
             </h2>
             <p className={styles.importProgressSub}>
-              大文件将分多批写入数据库；进度会实时更新。点「取消」将中断本地等待，服务器端可能仍在处理，可稍后刷新列表确认。
+              {importAnalyzing
+                ? "分析为单次请求，无法显示精确百分比。点「取消」会中断浏览器等待（服务端若已在计算，仍可能继续片刻）。"
+                : "大文件将分多批写入数据库；进度会实时更新。点「取消」将中断本地等待，服务器端可能仍在处理，可稍后刷新列表确认。"}
             </p>
-            <div className={styles.importProgressTrack} aria-hidden>
-              <div
-                className={styles.importProgressFill}
-                style={{ width: `${importProgress?.percent ?? 0}%` }}
-              />
-            </div>
+            {importProgress?.indeterminate ? (
+              <div className={styles.importProgressTrackIndeterminate} aria-hidden>
+                <div className={styles.importProgressIndeterminateBar} />
+              </div>
+            ) : (
+              <div className={styles.importProgressTrack} aria-hidden>
+                <div
+                  className={styles.importProgressFill}
+                  style={{ width: `${importProgress?.percent ?? 0}%` }}
+                />
+              </div>
+            )}
             <div className={styles.importProgressPercentRow}>
-              <span className={styles.importProgressPercentNum}>{importProgress?.percent ?? 0}%</span>
-              {importProgress?.chunkLabel ? (
-                <span className={styles.importProgressChunk}>{importProgress.chunkLabel}</span>
-              ) : null}
+              {importProgress?.indeterminate ? (
+                <span className={styles.importProgressPercentNum}>处理中…</span>
+              ) : (
+                <>
+                  <span className={styles.importProgressPercentNum}>{importProgress?.percent ?? 0}%</span>
+                  {importProgress?.chunkLabel ? (
+                    <span className={styles.importProgressChunk}>{importProgress.chunkLabel}</span>
+                  ) : null}
+                </>
+              )}
             </div>
             <p className={styles.importProgressMsg}>{importProgress?.message ?? "准备中…"}</p>
             <p className={styles.importProgressStep}>
               当前阶段：
               {IMPORT_STEP_LABEL[importProgress?.step ?? ""] ?? importProgress?.step ?? "—"}
             </p>
-            <button type="button" className={styles.importProgressCancel} onClick={() => importAbortRef.current?.abort()}>
-              取消导入
+            <button
+              type="button"
+              className={styles.importProgressCancel}
+              onClick={() => {
+                importAbortRef.current?.abort();
+              }}
+            >
+              {importAnalyzing ? "取消分析" : "取消导入"}
             </button>
           </div>
         </div>

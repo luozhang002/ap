@@ -42,9 +42,63 @@
 }
 
 .tableWrap {
+  position: relative;
   overflow-x: auto;
   border-radius: 10px;
   border: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.tableWrapLoading {
+  min-height: 200px;
+}
+
+.tableLoadingOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: rgba(2, 6, 23, 0.5);
+  backdrop-filter: blur(3px);
+  border-radius: 10px;
+  pointer-events: auto;
+  cursor: wait;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(56, 189, 248, 0.2);
+  border-top-color: #38bdf8;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loadingText {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(226, 232, 240, 0.95);
+  letter-spacing: 0.02em;
+}
+
+.tableLoadingDim {
+  opacity: 0.55;
+}
+
+.loadingPlaceholderCell {
+  height: 200px;
+  padding: 0 !important;
+  border: none !important;
+  vertical-align: middle;
 }
 
 .table {
@@ -115,6 +169,30 @@
   color: #7dd3fc;
 }
 
+.btnDanger {
+  border: none;
+  background: none;
+  padding: 0;
+  margin-left: 12px;
+  color: #f87171;
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-family: inherit;
+}
+
+.btnDanger:hover {
+  color: #fca5a5;
+}
+
+.rowActions {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+}
+
 .btnPrimary {
   display: inline-flex;
   align-items: center;
@@ -169,6 +247,34 @@
   font-size: 16px;
   font-weight: 600;
   color: #f8fafc;
+}
+
+.deleteConfirmText {
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: rgba(148, 163, 184, 0.95);
+}
+
+.btnDangerPrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  background: #b91c1c;
+  color: #fef2f2;
+}
+
+.btnDangerPrimary:hover {
+  background: #dc2626;
 }
 
 .field {
@@ -230,8 +336,3 @@
   background: rgba(148, 163, 184, 0.1);
 }
 
-.loadingRow {
-  padding: 24px;
-  text-align: center;
-  color: rgba(148, 163, 184, 0.9);
-}

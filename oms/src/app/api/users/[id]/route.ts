@@ -71,3 +71,28 @@ export async function PATCH(req: Request, ctx: Params) {
 
   return NextResponse.json({ user: updated });
 }
+
+/** DELETE：仅可删除普通员工；管理员账号不可删除 */
+export async function DELETE(_req: Request, ctx: Params) {
+  const admin = await getOmsUser();
+  if (!admin) {
+    return NextResponse.json({ error: "未登录" }, { status: 401 });
+  }
+
+  const id = Number((await ctx.params).id);
+  if (!Number.isFinite(id)) {
+    return NextResponse.json({ error: "无效的用户 ID" }, { status: 400 });
+  }
+
+  const target = await prisma.user.findUnique({ where: { id } });
+  if (!target) {
+    return NextResponse.json({ error: "用户不存在" }, { status: 404 });
+  }
+
+  if (target.role !== Role.EMPLOYEE) {
+    return NextResponse.json({ error: "不能删除管理员账号" }, { status: 403 });
+  }
+
+  await prisma.user.delete({ where: { id } });
+  return NextResponse.json({ ok: true });
+}

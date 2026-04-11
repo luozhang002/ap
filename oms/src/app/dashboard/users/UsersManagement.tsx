@@ -21,6 +21,7 @@ export function UsersManagement({ currentUserId }: { currentUserId: number }) {
 
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [active, setActive] = useState<UserRow | null>(null);
 
   const [addUsername, setAddUsername] = useState("");
@@ -65,6 +66,8 @@ export function UsersManagement({ currentUserId }: { currentUserId: number }) {
   const canManageRow = (row: UserRow) =>
     row.role === "EMPLOYEE" || row.id === currentUserId;
 
+  const canDeleteRow = (row: UserRow) => row.role === "EMPLOYEE";
+
   const openEdit = (row: UserRow) => {
     setActive(row);
     setEditName(row.name);
@@ -85,6 +88,29 @@ export function UsersManagement({ currentUserId }: { currentUserId: number }) {
     setActive(null);
     setEditPassword("");
     setEditConfirm("");
+  };
+
+  const openDelete = (row: UserRow) => {
+    setActive(row);
+    setDeleteOpen(true);
+  };
+
+  const closeDelete = () => {
+    setDeleteOpen(false);
+    setActive(null);
+  };
+
+  const submitDelete = async () => {
+    if (!active || active.role !== "EMPLOYEE") return;
+    const res = await fetch(`/api/users/${active.id}`, { method: "DELETE" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      showError(typeof data.error === "string" ? data.error : "删除失败");
+      return;
+    }
+    showSuccess("已删除该用户");
+    closeDelete();
+    load();
   };
 
   const submitAdd = async () => {
@@ -174,24 +200,38 @@ export function UsersManagement({ currentUserId }: { currentUserId: number }) {
         </button>
       </div>
       <p className={styles.hint}>
-        可添加 CRM 使用的普通员工账号；点「修改」可同时调整姓名与密码（密码留空则不改），不能修改其他管理员。
+        可添加 CRM 使用的普通员工账号；点「修改」可同时调整姓名与密码（密码留空则不改），不能修改其他管理员。仅普通员工可删除，管理员账号不可删除。
       </p>
 
-      <div className={styles.tableWrap}>
+      <div className={`${styles.tableWrap} ${loading ? styles.tableWrapLoading : ""}`}>
         {loading ? (
-          <div className={styles.loadingRow}>加载中…</div>
-        ) : (
-          <table className={styles.table}>
-            <thead>
+          <div className={styles.tableLoadingOverlay} role="status" aria-live="polite">
+            <div className={styles.spinner} aria-hidden />
+            <span className={styles.loadingText}>加载中…</span>
+          </div>
+        ) : null}
+        <table className={`${styles.table} ${loading ? styles.tableLoadingDim : ""}`}>
+          <thead>
+            <tr>
+              <th>用户名</th>
+              <th>姓名</th>
+              <th>角色</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.length === 0 && !loading ? (
               <tr>
-                <th>用户名</th>
-                <th>姓名</th>
-                <th>角色</th>
-                <th>操作</th>
+                <td colSpan={4} className={styles.muted}>
+                  暂无用户，可点击「添加普通用户」创建 CRM 账号
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {users.map((row) => (
+            ) : users.length === 0 && loading ? (
+              <tr>
+                <td colSpan={4} className={styles.loadingPlaceholderCell} />
+              </tr>
+            ) : (
+              users.map((row) => (
                 <tr key={row.id}>
                   <td>{row.username}</td>
                   <td>{row.name}</td>
@@ -203,19 +243,28 @@ export function UsersManagement({ currentUserId }: { currentUserId: number }) {
                     )}
                   </td>
                   <td>
-                    {canManageRow(row) ? (
-                      <button type="button" className={styles.btnLink} onClick={() => openEdit(row)}>
-                        修改
-                      </button>
+                    {canManageRow(row) || canDeleteRow(row) ? (
+                      <span className={styles.rowActions}>
+                        {canManageRow(row) ? (
+                          <button type="button" className={styles.btnLink} onClick={() => openEdit(row)}>
+                            修改
+                          </button>
+                        ) : null}
+                        {canDeleteRow(row) ? (
+                          <button type="button" className={styles.btnDanger} onClick={() => openDelete(row)}>
+                            删除
+                          </button>
+                        ) : null}
+                      </span>
                     ) : (
                       <span className={styles.muted}>—</span>
                     )}
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
       {addOpen ? (
@@ -280,6 +329,38 @@ export function UsersManagement({ currentUserId }: { currentUserId: number }) {
               </button>
               <button type="button" className={styles.btnPrimary} onClick={submitAdd}>
                 创建
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {deleteOpen && active && active.role === "EMPLOYEE" ? (
+        <div
+          className={styles.overlay}
+          role="presentation"
+          onClick={closeDelete}
+          onKeyDown={(e) => e.key === "Escape" && closeDelete()}
+        >
+          <div
+            className={styles.modal}
+            role="dialog"
+            aria-modal
+            aria-labelledby="delete-user-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="delete-user-title" className={styles.modalTitle}>
+              确认删除用户？
+            </h2>
+            <p className={styles.deleteConfirmText}>
+              将永久删除「{active.name}」（{active.username}），CRM 将无法再用该账号登录。此操作不可恢复。
+            </p>
+            <div className={styles.modalActions}>
+              <button type="button" className={styles.btnGhost} onClick={closeDelete}>
+                取消
+              </button>
+              <button type="button" className={styles.btnDangerPrimary} onClick={submitDelete}>
+                确认删除
               </button>
             </div>
           </div>

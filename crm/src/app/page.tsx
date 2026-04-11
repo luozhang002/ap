@@ -1,8 +1,13 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getCrmSession } from "@/lib/session";
+import { getCrmSession, getCrmUser } from "@/lib/session";
 
 export default async function Home() {
   const session = await getCrmSession();
-  if (session) redirect("/dashboard");
+  if (session) {
+    const user = await getCrmUser();
+    if (user) redirect("/dashboard");
+    (await cookies()).delete("crm_token");
+  }
   redirect("/login");
 }

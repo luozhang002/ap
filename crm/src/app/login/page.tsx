@@ -1,11 +1,16 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getCrmSession } from "@/lib/session";
+import { getCrmSession, getCrmUser } from "@/lib/session";
 import { LoginForm } from "./LoginForm";
 import styles from "./page.module.css";
 
 export default async function LoginPage() {
   const s = await getCrmSession();
-  if (s) redirect("/dashboard");
+  if (s) {
+    const user = await getCrmUser();
+    if (user) redirect("/dashboard");
+    (await cookies()).delete("crm_token");
+  }
 
   return (
     <div className={styles.shell}>

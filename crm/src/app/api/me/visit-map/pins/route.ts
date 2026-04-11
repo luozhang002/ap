@@ -12,7 +12,7 @@ const SHEET_LABEL: Record<string, string> = {
   JIELIEBANG: "接力棒",
 };
 
-/** 陌拜地图：当前客户经理名下企业点（含 extraJson 缓存坐标） */
+/** 陌拜地图：当前登录姓名与「客户经理」匹配的企业点（含 extraJson 缓存坐标） */
 export async function GET() {
   const user = await getCrmUser();
   if (!user) {
@@ -44,8 +44,8 @@ export async function GET() {
       SELECT id, customerName, sheetKind, issuedAddress, actualBusinessAddress, province, city, district,
              actuallyVisited, lastVisitTime, actualVisitTime, extraJson
       FROM enterprise_records
-      WHERE branchOwnerName IS NOT NULL
-        AND TRIM(branchOwnerName) = ${n}
+      WHERE ownerName IS NOT NULL
+        AND TRIM(ownerName) = ${n}
       ORDER BY id DESC
       LIMIT 500
     `,

@@ -15,7 +15,7 @@ export default async function DashboardPage() {
         <div className={styles.brand}>
           <p className={styles.brandTitle}>我的企业</p>
           <p className={styles.brandSub}>
-            {user.name}（{user.username}）· 外勤员工
+            {user.name}（{user.username}）
           </p>
         </div>
       </header>
@@ -23,11 +23,11 @@ export default async function DashboardPage() {
         <section className={`${styles.hero} ${styles.heroVisited}`}>
           <h2>我的企业</h2>
           <p className={styles.sectionHint}>
-            根据您账号「姓名」与 OMS 导入「分中心负责人」（客户经理）匹配；含已拜访与未拜访，卡片上可区分状态。
+            根据您账号「姓名」与 OMS 中每条企业的「客户经理」逐字匹配（导入 Excel 对应「负责人」列）；含已拜访与未拜访，卡片上可区分状态。
           </p>
           {items.length === 0 ? (
             <p className={styles.emptyHint}>
-              暂无负责企业。请确认用户「姓名」与 Excel「分中心负责人」一致（含空格、全半角须一致）。
+              暂无负责企业。请核对账号「姓名」与 OMS 该企业行的「客户经理」是否完全一致（含空格、全半角）；导入表请对照「负责人」列，勿与其它列混淆。
             </p>
           ) : (
             <ul className={styles.cardList} aria-label="负责企业列表">

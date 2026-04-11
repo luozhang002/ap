@@ -12,7 +12,9 @@ export default async function VisitMapPage() {
       <header className={styles.top}>
         <div className={styles.brand}>
           <h1 className={styles.title}>陌拜地图</h1>
-          <p className={styles.sub}>分中心负责人名下客户 · 红点未拜访 / 蓝点已拜访</p>
+          <p className={styles.sub}>
+            与首页相同：按 OMS「客户经理」（导入「负责人」）与登录姓名匹配 · 红点未拜访 / 蓝点已拜访
+          </p>
         </div>
       </header>
       <main className={styles.main}>

@@ -114,11 +114,11 @@ export function EnterprisesManagement() {
 
   /** 主筛选：企业名称 */
   const [customerName, setCustomerName] = useState("");
-  /** 客户经理 → 库字段「分中心负责人」 */
-  const [branchOwnerName, setBranchOwnerName] = useState("");
-  const [city, setCity] = useState("");
-  /** 负责人 → 库字段「负责人」 */
+  /** 客户经理 → 库字段 ownerName（CRM 登录姓名与此匹配） */
   const [ownerName, setOwnerName] = useState("");
+  const [city, setCity] = useState("");
+  /** 分中心负责人 → 库字段 branchOwnerName（上级管辖，非 CRM 匹配字段） */
+  const [branchOwnerName, setBranchOwnerName] = useState("");
 
   const [sheetKind, setSheetKind] = useState("");
   const [batchId, setBatchId] = useState("");
@@ -171,10 +171,10 @@ export function EnterprisesManagement() {
         if (sheetKind) p.set("sheetKind", sheetKind);
         if (bid) p.set("batchId", bid);
         if (customerName.trim()) p.set("customerName", customerName.trim());
-        if (branchOwnerName.trim()) p.set("branchOwnerName", branchOwnerName.trim());
+        if (ownerName.trim()) p.set("ownerName", ownerName.trim());
         if (city.trim()) p.set("city", city.trim());
         if (district.trim()) p.set("district", district.trim());
-        if (ownerName.trim()) p.set("ownerName", ownerName.trim());
+        if (branchOwnerName.trim()) p.set("branchOwnerName", branchOwnerName.trim());
         if (issueFrom) p.set("issueFrom", issueFrom);
         if (issueTo) p.set("issueTo", issueTo);
 
@@ -198,10 +198,10 @@ export function EnterprisesManagement() {
       sheetKind,
       batchId,
       customerName,
-      branchOwnerName,
+      ownerName,
       city,
       district,
-      ownerName,
+      branchOwnerName,
       issueFrom,
       issueTo,
     ]
@@ -383,9 +383,9 @@ export function EnterprisesManagement() {
 
   const resetFilters = () => {
     setCustomerName("");
-    setBranchOwnerName("");
-    setCity("");
     setOwnerName("");
+    setCity("");
+    setBranchOwnerName("");
     setSheetKind("");
     setBatchId("");
     setDistrict("");
@@ -408,7 +408,7 @@ export function EnterprisesManagement() {
       "所在区",
       "CCIF",
       "客户经理",
-      "负责人",
+      "分中心负责人",
       "下发时间",
       "额度",
       "联系电话",
@@ -434,8 +434,8 @@ export function EnterprisesManagement() {
           r.city ?? "",
           r.district ?? "",
           r.ccif ?? "",
-          r.branchOwnerName ?? "",
           r.ownerName ?? "",
+          r.branchOwnerName ?? "",
           r.issueTime ? fmtDate(r.issueTime) : "",
           r.quotaAmount ?? "",
           r.contactPhone ?? "",
@@ -474,7 +474,7 @@ export function EnterprisesManagement() {
       </div>
 
       <p className={styles.hint}>
-        Excel 须含 <strong>3 个工作表</strong>（顺序：一类 / 非常规名单 / 接力棒）。主筛可选类别；客户经理对应「分中心负责人」列；更多筛选中可填负责人。
+        Excel 须含 <strong>3 个工作表</strong>（顺序：一类 / 非常规名单 / 接力棒）。主筛可按<strong>客户经理</strong>（导入列「负责人」）；更多筛选可按<strong>分中心负责人</strong>。
       </p>
 
       {toast?.type === "error" && <div className={styles.bannerError}>{toast.text}</div>}
@@ -498,9 +498,9 @@ export function EnterprisesManagement() {
             <span className={styles.filterLabel}>客户经理</span>
             <input
               className={styles.filterInput}
-              placeholder="请输入客户经理"
-              value={branchOwnerName}
-              onChange={(e) => setBranchOwnerName(e.target.value)}
+              placeholder="与导入「负责人」一致"
+              value={ownerName}
+              onChange={(e) => setOwnerName(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") applySearch();
               }}
@@ -602,12 +602,12 @@ export function EnterprisesManagement() {
           <summary className={styles.moreSummary}>更多筛选</summary>
           <div className={styles.moreGrid}>
             <label className={styles.filterItem}>
-              <span className={styles.filterLabel}>负责人</span>
+              <span className={styles.filterLabel}>分中心负责人</span>
               <input
                 className={styles.filterInput}
-                placeholder="请输入负责人"
-                value={ownerName}
-                onChange={(e) => setOwnerName(e.target.value)}
+                placeholder="请输入分中心负责人"
+                value={branchOwnerName}
+                onChange={(e) => setBranchOwnerName(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") applySearch();
                 }}
@@ -669,7 +669,7 @@ export function EnterprisesManagement() {
               <th>所在区</th>
               <th>CCIF</th>
               <th>客户经理</th>
-              <th>负责人</th>
+              <th>分中心负责人</th>
               <th>下发时间</th>
               <th>额度</th>
               <th>联系电话</th>
@@ -709,8 +709,8 @@ export function EnterprisesManagement() {
                   <td>{r.city ?? "—"}</td>
                   <td>{r.district ?? "—"}</td>
                   <td>{r.ccif ?? "—"}</td>
-                  <td>{r.branchOwnerName ?? "—"}</td>
                   <td>{r.ownerName ?? "—"}</td>
+                  <td>{r.branchOwnerName ?? "—"}</td>
                   <td>{fmtDate(r.issueTime)}</td>
                   <td>{r.quotaAmount ?? "—"}</td>
                   <td>{r.contactPhone ?? "—"}</td>
@@ -793,17 +793,17 @@ export function EnterprisesManagement() {
                 />
               </label>
               <label className={styles.modalField}>
-                <span>客户经理（分中心负责人）</span>
-                <input
-                  value={editDraft.branchOwnerName}
-                  onChange={(e) => setEditDraft((d) => ({ ...d, branchOwnerName: e.target.value }))}
-                />
-              </label>
-              <label className={styles.modalField}>
-                <span>负责人</span>
+                <span>客户经理（导入列「负责人」）</span>
                 <input
                   value={editDraft.ownerName}
                   onChange={(e) => setEditDraft((d) => ({ ...d, ownerName: e.target.value }))}
+                />
+              </label>
+              <label className={styles.modalField}>
+                <span>分中心负责人</span>
+                <input
+                  value={editDraft.branchOwnerName}
+                  onChange={(e) => setEditDraft((d) => ({ ...d, branchOwnerName: e.target.value }))}
                 />
               </label>
               <label className={styles.modalField}>

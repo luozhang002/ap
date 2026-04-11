@@ -43,7 +43,7 @@ export function rowIsVisited(r: {
 }
 
 /**
- * 客户经理（Excel「分中心负责人」）名下全部企业（含已拜访与未拜访）。
+ * 客户经理（`ownerName`，与 OMS「客户经理」/ 导入一致）名下全部企业（含已拜访与未拜访）。
  */
 export async function getEnterprisesForManager(userDisplayName: string): Promise<{
   items: ManagerEnterpriseCard[];
@@ -73,8 +73,8 @@ export async function getEnterprisesForManager(userDisplayName: string): Promise
       SELECT id, customerName, sheetKind, issuedAddress, province, city, district,
              actuallyVisited, lastVisitTime, actualVisitTime, contactPhone, visitRemark
       FROM enterprise_records
-      WHERE branchOwnerName IS NOT NULL
-        AND TRIM(branchOwnerName) = ${n}
+      WHERE ownerName IS NOT NULL
+        AND TRIM(ownerName) = ${n}
       ORDER BY id DESC
       LIMIT 500
     `,
@@ -100,7 +100,7 @@ export async function getEnterprisesForManager(userDisplayName: string): Promise
 }
 
 /**
- * 与列表/地图相同的「已拜访」判定，统计当前客户经理名下企业数量。
+ * 与列表/地图相同的「已拜访」判定，统计当前登录姓名在「客户经理」名下企业数量。
  */
 export async function getManagerVisitStats(userDisplayName: string): Promise<{
   total: number;
@@ -136,8 +136,8 @@ export async function getManagerVisitStats(userDisplayName: string): Promise<{
           0
         ) AS visited
       FROM enterprise_records
-      WHERE branchOwnerName IS NOT NULL
-        AND TRIM(branchOwnerName) = ${n}
+      WHERE ownerName IS NOT NULL
+        AND TRIM(ownerName) = ${n}
     `,
   );
 

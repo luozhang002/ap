@@ -67,6 +67,7 @@ add("是否可用折扣券", "discountCouponAvailable");
 add("预计金额违约率是否大于9", "defaultRateOver9");
 
 add("负责人", "ownerName");
+add("客户经理", "ownerName");
 add("分中心负责人", "branchOwnerName");
 add("法人姓名", "legalPersonName");
 add("联系电话", "contactPhone");

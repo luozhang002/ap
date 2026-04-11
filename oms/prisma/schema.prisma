@@ -122,9 +122,9 @@ model EnterpriseRecord {
   /// 预计金额违约率是否大于9
   defaultRateOver9        Boolean?
 
-  /// 负责人
+  /// 客户经理（与 CRM 登录姓名匹配；列表「客户经理」列）
   ownerName       String? @db.VarChar(256)
-  /// 分中心负责人（客户经理，CRM 依此匹配登录用户）
+  /// 分中心负责人（管辖客户经理的上级）
   branchOwnerName String? @db.VarChar(256)
   /// 法人姓名
   legalPersonName String? @db.VarChar(256)

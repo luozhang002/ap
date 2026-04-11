@@ -27,7 +27,7 @@ export default async function MePage() {
         <section className={styles.statsSection} aria-label="拜访统计">
           <h2 className={styles.statsHeading}>拜访概况</h2>
           <p className={styles.statsScope}>
-            与首页「我的企业」一致：按 OMS 导入表中「分中心负责人」与您的姓名匹配。
+            与首页「我的企业」一致：按 OMS 中「客户经理」与您的登录姓名匹配。
           </p>
           <div className={styles.statsGrid}>
             <div className={styles.statCard}>

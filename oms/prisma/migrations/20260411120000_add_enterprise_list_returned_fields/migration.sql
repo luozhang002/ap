@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `enterprise_records` ADD COLUMN `listReturned` BOOLEAN NULL,
+ADD COLUMN `returnReason` TEXT NULL;

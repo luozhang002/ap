@@ -37,7 +37,10 @@ const PATCHABLE_STRING = new Set([
   "listType",
   "packageName",
   "customerType",
+  "returnReason",
 ]);
+
+const PATCHABLE_BOOL = new Set(["listReturned"]);
 
 function forbiddenKeys(body: Record<string, unknown>): string | null {
   const blocked = ["issueTime", "batchId", "sheetKind", "rowIndex", "id"];
@@ -77,7 +80,7 @@ export async function PATCH(req: Request, ctx: Params) {
       return NextResponse.json({ error: `不允许修改字段：${bad}` }, { status: 400 });
     }
 
-    const data: Record<string, string | null> = {};
+    const data: Record<string, string | boolean | null> = {};
     for (const key of PATCHABLE_STRING) {
       if (!(key in body)) continue;
       const v = body[key];
@@ -91,6 +94,19 @@ export async function PATCH(req: Request, ctx: Params) {
         continue;
       }
       return NextResponse.json({ error: `字段 ${key} 须为字符串或 null` }, { status: 400 });
+    }
+    for (const key of PATCHABLE_BOOL) {
+      if (!(key in body)) continue;
+      const v = body[key];
+      if (v === null) {
+        data[key] = null;
+        continue;
+      }
+      if (typeof v === "boolean") {
+        data[key] = v;
+        continue;
+      }
+      return NextResponse.json({ error: `字段 ${key} 须为布尔或 null` }, { status: 400 });
     }
 
     if (Object.keys(data).length === 0) {

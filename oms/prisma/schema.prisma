@@ -163,6 +163,11 @@ model EnterpriseRecord {
   /// 是否见到客户
   metCustomer     Boolean?
 
+  /// 名单是否退回（模板列；在「是否见到客户」与「渠道」之间）
+  listReturned Boolean?
+  /// 退回原因
+  returnReason String? @db.Text
+
   /// 渠道
   channel String? @db.VarChar(256)
   /// 影像资料

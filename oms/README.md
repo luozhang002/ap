@@ -4,6 +4,8 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 **维护说明：** 目前使用的 Excel 列模板与 `EnterpriseRecord` 等数据库模型是**可演进设计**，后续若模板或字段变更，通常需要联动调整：`oms/prisma/schema.prisma`（及与 OMS 共库的 CRM schema 若需同步）、`src/lib/enterprise-headers.ts`、`enterprise-import.ts` / `enterprise-parse.ts`、`enterprise-serialize.ts`、相关 API 路由与 `dashboard/enterprises` 页面展示与导出。
 
+更完整的**迁移说明、多版本模板兼容与改字段检查表**见：[docs/enterprise-excel-schema-evolution.md](docs/enterprise-excel-schema-evolution.md)。
+
 ## Getting Started
 
 First, run the development server:

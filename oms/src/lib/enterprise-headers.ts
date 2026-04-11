@@ -19,7 +19,7 @@ function add(canonical: string, field: string) {
   HEADER_MAP[normalizeHeader(canonical)] = field;
 }
 
-// ── 三个 Sheet 共有字段（40 个）──
+// ── 三个 Sheet 共有字段（模板同步维护，含「名单是否退回」「退回原因」等）──
 
 add("下发时间 (不可改)", "issueTime");
 add("下发时间(不可改)", "issueTime");
@@ -84,6 +84,9 @@ add("Label", "labelTag");
 add("是否实际上门", "actuallyVisited");
 add("实际上门时间", "actualVisitTime");
 add("是否见到客户", "metCustomer");
+
+add("名单是否退回", "listReturned");
+add("退回原因", "returnReason");
 
 add("渠道", "channel");
 add("影像资料", "imageMaterials");

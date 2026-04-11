@@ -60,6 +60,8 @@ type RecordRow = {
   actuallyVisited: boolean | null;
   actualVisitTime: string | null;
   metCustomer: boolean | null;
+  listReturned: boolean | null;
+  returnReason: string | null;
   visitRemark: string | null;
   extraJson: unknown;
   batch: { id: number; fileName: string; createdAt: string };
@@ -139,6 +141,8 @@ export function EnterprisesManagement() {
     channel: "",
     relayTag: "",
     telemarketingNote: "",
+    listReturned: "" as "" | "true" | "false",
+    returnReason: "",
   });
 
   const showError = (text: string) => setToast({ type: "error", text });
@@ -238,6 +242,9 @@ export function EnterprisesManagement() {
       channel: r.channel ?? "",
       relayTag: r.relayTag ?? "",
       telemarketingNote: r.telemarketingNote ?? "",
+      listReturned:
+        r.listReturned === true ? "true" : r.listReturned === false ? "false" : "",
+      returnReason: r.returnReason ?? "",
     });
   };
 
@@ -264,6 +271,11 @@ export function EnterprisesManagement() {
           channel: editDraft.channel,
           relayTag: editDraft.relayTag,
           telemarketingNote: editDraft.telemarketingNote,
+          listReturned:
+            editDraft.listReturned === ""
+              ? null
+              : editDraft.listReturned === "true",
+          returnReason: editDraft.returnReason,
         }),
       });
       const data = await parseJsonBody<{ error?: string }>(res);
@@ -416,6 +428,8 @@ export function EnterprisesManagement() {
       "接力棒标签",
       "是否实际上门",
       "是否见到客户",
+      "名单是否退回",
+      "退回原因",
       "最近一次上门时间",
       "预约上门时间",
       "实际上门时间",
@@ -443,6 +457,8 @@ export function EnterprisesManagement() {
           r.relayTag ?? "",
           fmtBool(r.actuallyVisited),
           fmtBool(r.metCustomer),
+          fmtBool(r.listReturned),
+          r.returnReason ?? "",
           r.lastVisitTime ? fmtDate(r.lastVisitTime) : "",
           r.scheduledVisitTime ? fmtDate(r.scheduledVisitTime) : "",
           r.actualVisitTime ? fmtDate(r.actualVisitTime) : "",
@@ -677,6 +693,8 @@ export function EnterprisesManagement() {
               <th>接力棒标签</th>
               <th>是否实际上门</th>
               <th>是否见到客户</th>
+              <th>名单是否退回</th>
+              <th>退回原因</th>
               <th>最近一次上门时间</th>
               <th>预约上门时间</th>
               <th>实际上门时间</th>
@@ -689,13 +707,13 @@ export function EnterprisesManagement() {
           <tbody>
             {records.length === 0 && !loading ? (
               <tr>
-                <td colSpan={23} className={styles.muted}>
+                <td colSpan={25} className={styles.muted}>
                   暂无数据，请先导入 Excel
                 </td>
               </tr>
             ) : records.length === 0 && loading ? (
               <tr>
-                <td colSpan={23} className={styles.loadingPlaceholderCell} />
+                <td colSpan={25} className={styles.loadingPlaceholderCell} />
               </tr>
             ) : (
               records.map((r) => (
@@ -718,6 +736,10 @@ export function EnterprisesManagement() {
                   <td>{r.relayTag ?? "—"}</td>
                   <td>{fmtBool(r.actuallyVisited)}</td>
                   <td>{fmtBool(r.metCustomer)}</td>
+                  <td>{fmtBool(r.listReturned)}</td>
+                  <td className={styles.cellLong} title={r.returnReason ?? undefined}>
+                    {r.returnReason?.trim() ? r.returnReason : "—"}
+                  </td>
                   <td>{fmtDate(r.lastVisitTime)}</td>
                   <td>{fmtDate(r.scheduledVisitTime)}</td>
                   <td>{fmtDate(r.actualVisitTime)}</td>
@@ -811,6 +833,30 @@ export function EnterprisesManagement() {
                 <input
                   value={editDraft.contactPhone}
                   onChange={(e) => setEditDraft((d) => ({ ...d, contactPhone: e.target.value }))}
+                />
+              </label>
+              <label className={styles.modalField}>
+                <span>名单是否退回</span>
+                <select
+                  value={editDraft.listReturned}
+                  onChange={(e) =>
+                    setEditDraft((d) => ({
+                      ...d,
+                      listReturned: e.target.value as "" | "true" | "false",
+                    }))
+                  }
+                >
+                  <option value="">未填</option>
+                  <option value="true">是</option>
+                  <option value="false">否</option>
+                </select>
+              </label>
+              <label className={styles.modalFieldFull}>
+                <span>退回原因</span>
+                <textarea
+                  rows={2}
+                  value={editDraft.returnReason}
+                  onChange={(e) => setEditDraft((d) => ({ ...d, returnReason: e.target.value }))}
                 />
               </label>
               <label className={styles.modalField}>

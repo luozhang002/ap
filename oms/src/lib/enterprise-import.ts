@@ -31,6 +31,7 @@ const BOOL_FIELDS = new Set<string>([
   "hasCustomerIntent",
   "actuallyVisited",
   "metCustomer",
+  "listReturned",
   "suspectedRisk",
   "addressVerified",
   "addressMatchRegistered",

@@ -1,6 +1,5 @@
 .page {
-  min-height: 100vh;
-  min-height: 100dvh;
+  min-height: 100%;
   background: linear-gradient(180deg, #e6fffb 0%, #f6ffed 45%, #ffffff 100%);
   color: #0f172a;
 }
@@ -34,27 +33,11 @@
   line-height: 1.4;
 }
 
-.backLink {
-  flex: none;
-  padding: 8px 14px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #08979c;
-  background: rgba(8, 151, 156, 0.1);
-  border: 1px solid rgba(8, 151, 156, 0.25);
-  text-decoration: none;
-}
-
-.backLink:active {
-  opacity: 0.85;
-}
-
 .main {
   width: 100%;
   max-width: min(1320px, 100%);
   margin: 0 auto;
-  padding: 16px 16px 40px;
+  padding: 16px 16px 24px;
   box-sizing: border-box;
   min-height: min(560px, 85dvh);
 }

@@ -98,3 +98,52 @@ export async function getEnterprisesForManager(userDisplayName: string): Promise
 
   return { items };
 }
+
+/**
+ * 与列表/地图相同的「已拜访」判定，统计当前客户经理名下企业数量。
+ */
+export async function getManagerVisitStats(userDisplayName: string): Promise<{
+  total: number;
+  visited: number;
+  unvisited: number;
+}> {
+  const n = normalizeManagerName(userDisplayName);
+  if (!n) {
+    return { total: 0, visited: 0, unvisited: 0 };
+  }
+
+  const rows = await prisma.$queryRaw<
+    Array<{
+      total: bigint;
+      visited: bigint;
+    }>
+  >(
+    Prisma.sql`
+      SELECT
+        COUNT(*) AS total,
+        COALESCE(
+          SUM(
+            CASE
+              WHEN (
+                actuallyVisited = 1
+                OR lastVisitTime IS NOT NULL
+                OR actualVisitTime IS NOT NULL
+              )
+                THEN 1
+              ELSE 0
+            END
+          ),
+          0
+        ) AS visited
+      FROM enterprise_records
+      WHERE branchOwnerName IS NOT NULL
+        AND TRIM(branchOwnerName) = ${n}
+    `,
+  );
+
+  const r = rows[0];
+  const total = Number(r?.total ?? 0);
+  const visited = Number(r?.visited ?? 0);
+  const unvisited = Math.max(0, total - visited);
+  return { total, visited, unvisited };
+}

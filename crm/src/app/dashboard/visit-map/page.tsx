@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCrmUser } from "@/lib/session";
 import { VisitMapPageClient } from "./VisitMapPageClient";
@@ -15,9 +14,6 @@ export default async function VisitMapPage() {
           <h1 className={styles.title}>陌拜地图</h1>
           <p className={styles.sub}>分中心负责人名下客户 · 红点未拜访 / 蓝点已拜访</p>
         </div>
-        <Link href="/dashboard" className={styles.backLink}>
-          返回首页
-        </Link>
       </header>
       <main className={styles.main}>
         <VisitMapPageClient />

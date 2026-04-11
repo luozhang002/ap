@@ -1,8 +1,6 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getEnterprisesForManager } from "@/lib/crm-visited-enterprises";
 import { getCrmUser } from "@/lib/session";
-import { LogoutButton } from "./LogoutButton";
 import styles from "./page.module.css";
 
 export default async function DashboardPage() {
@@ -15,16 +13,10 @@ export default async function DashboardPage() {
     <div className={styles.page}>
       <header className={styles.top}>
         <div className={styles.brand}>
-          <p className={styles.brandTitle}>CRM · 客户与地图</p>
+          <p className={styles.brandTitle}>我的企业</p>
           <p className={styles.brandSub}>
             {user.name}（{user.username}）· 外勤员工
           </p>
-        </div>
-        <div className={styles.topActions}>
-          <Link href="/dashboard/visit-map" className={styles.mapLink}>
-            陌拜地图
-          </Link>
-          <LogoutButton />
         </div>
       </header>
       <main className={styles.main}>

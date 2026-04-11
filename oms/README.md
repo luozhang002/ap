@@ -6,6 +6,8 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 更完整的**迁移说明、多版本模板兼容与改字段检查表**见：[docs/enterprise-excel-schema-evolution.md](docs/enterprise-excel-schema-evolution.md)。
 
+**重复导入（企业名称唯一、差异确认、以最新为准）** 的产品与工程方案见：[docs/enterprise-import-duplicate-handling.md](docs/enterprise-import-duplicate-handling.md)。
+
 ## Getting Started
 
 First, run the development server:

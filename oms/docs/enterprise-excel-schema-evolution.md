@@ -246,6 +246,9 @@ npx prisma generate
 | 表头映射 | `oms/src/lib/enterprise-headers.ts` |
 | 导入解析与类型 | `oms/src/lib/enterprise-import.ts`、`enterprise-parse.ts` |
 | 导入 API | `oms/src/app/api/enterprises/import/route.ts` |
+| **重复导入（设计说明）** | [enterprise-import-duplicate-handling.md](./enterprise-import-duplicate-handling.md) |
+| 导入前分析 | `oms/src/app/api/enterprises/import/analyze/route.ts` |
+| 去重与差异 | `oms/src/lib/enterprise-import-dedupe.ts` |
 | 单条更新白名单 | `oms/src/app/api/enterprises/records/[id]/route.ts` |
 | 三 Sheet 字段对比（脚本） | `ap/script/compare-sheets.mjs`、`sheet-compare-result.md` |
 

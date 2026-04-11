@@ -1,4 +1,11 @@
-import type { Prisma } from "@prisma/client";
+import type { EnterpriseRecord, Prisma } from "@prisma/client";
+import {
+  dedupeWithinFileLastWins,
+  loadExistingByCustomerKeys,
+  normalizeCustomerKey,
+  partitionByImportMode,
+  type ImportMode,
+} from "@/lib/enterprise-import-dedupe";
 import { chunk, parseEnterpriseWorkbook } from "@/lib/enterprise-import";
 import { getOmsUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
@@ -6,6 +13,13 @@ import { prisma } from "@/lib/prisma";
 export const runtime = "nodejs";
 
 const CREATE_CHUNK = 500;
+const UPDATE_CHUNK = 40;
+
+function parseImportMode(raw: FormDataEntryValue | null): ImportMode {
+  const s = typeof raw === "string" ? raw.trim() : "";
+  if (s === "insert_all" || s === "skip_existing" || s === "upsert") return s;
+  return "skip_existing";
+}
 
 export async function POST(req: Request) {
   const admin = await getOmsUser();
@@ -25,6 +39,7 @@ export async function POST(req: Request) {
     });
   }
 
+  const importMode = parseImportMode(form.get("importMode"));
   const originalName = file.name || "import.xlsx";
   const encoder = new TextEncoder();
 
@@ -79,11 +94,49 @@ export async function POST(req: Request) {
           ...parsed.rowsBySheet[2],
         ];
 
+        const { rows: dedupedRows, internalDropped } =
+          dedupeWithinFileLastWins(allRows);
+
+        push({
+          type: "progress",
+          percent: 32,
+          step: "prepare_db",
+          message: `解析 ${allRows.length} 行，文件内去重后 ${dedupedRows.length} 行；检查与库内企业名称重复…`,
+        });
+
+        const normalizedKeys = dedupedRows
+          .map((r) => normalizeCustomerKey(r.customerName))
+          .filter((k): k is string => k != null);
+
+        let existingByKey = new Map<string, EnterpriseRecord>();
+        if (importMode !== "insert_all" && normalizedKeys.length > 0) {
+          existingByKey = await loadExistingByCustomerKeys(
+            prisma,
+            normalizedKeys
+          );
+        }
+
+        const { toInsert, toUpdate, skipped } = partitionByImportMode(
+          dedupedRows,
+          existingByKey,
+          importMode
+        );
+
+        if (toInsert.length === 0 && toUpdate.length === 0) {
+          push({
+            type: "error",
+            message:
+              "没有可写入的数据：在「仅新客户」模式下全部为已存在企业，或文件无有效行。若需以本次 Excel 为准更新库中数据，请选择「覆盖更新」。",
+          });
+          controller.close();
+          return;
+        }
+
         push({
           type: "progress",
           percent: 36,
           step: "prepare_db",
-          message: `共解析 ${allRows.length} 行，准备写入数据库…`,
+          message: `准备写入：新增 ${toInsert.length} 行，更新 ${toUpdate.length} 行，跳过 ${skipped} 行（模式：${importMode}）`,
         });
 
         const batch = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
@@ -104,23 +157,54 @@ export async function POST(req: Request) {
             message: `已创建导入批次 #${b.id}`,
           });
 
-          const withBatch = allRows.map((r) => ({
+          const withBatch = toInsert.map((r) => ({
             ...r,
             batchId: b.id,
           }));
 
           const parts = chunk(withBatch, CREATE_CHUNK);
-          const total = parts.length;
-          for (let i = 0; i < total; i++) {
+          const totalParts = parts.length;
+          const updateParts = chunk(toUpdate, UPDATE_CHUNK);
+          const totalSteps = Math.max(1, totalParts + updateParts.length);
+          let stepIdx = 0;
+
+          for (let i = 0; i < totalParts; i++) {
             await tx.enterpriseRecord.createMany({ data: parts[i] });
-            const pct = 40 + Math.round(((i + 1) / total) * 56);
+            stepIdx += 1;
             push({
               type: "progress",
-              percent: Math.min(98, pct),
+              percent: Math.min(94, 40 + Math.round((stepIdx / totalSteps) * 54)),
               step: "insert",
-              message: `写入数据库：第 ${i + 1} / ${total} 批（每批最多 ${CREATE_CHUNK} 行）`,
+              message: `插入：第 ${i + 1} / ${totalParts} 批`,
               currentChunk: i + 1,
-              totalChunks: total,
+              totalChunks: totalParts,
+            });
+          }
+
+          for (let i = 0; i < updateParts.length; i++) {
+            const group = updateParts[i];
+            await Promise.all(
+              group.map(({ id, data }) => {
+                const { sheetKind, rowIndex, ...rest } = data;
+                return tx.enterpriseRecord.update({
+                  where: { id },
+                  data: {
+                    ...rest,
+                    batchId: b.id,
+                    sheetKind,
+                    rowIndex,
+                  },
+                });
+              })
+            );
+            stepIdx += 1;
+            push({
+              type: "progress",
+              percent: Math.min(97, 40 + Math.round((stepIdx / totalSteps) * 54)),
+              step: "insert",
+              message: `覆盖更新已存在企业：第 ${i + 1} / ${updateParts.length} 批`,
+              currentChunk: i + 1,
+              totalChunks: updateParts.length,
             });
           }
 
@@ -136,7 +220,15 @@ export async function POST(req: Request) {
             rowCountYilei,
             rowCountFeichanggui,
             rowCountJieliebang,
-            totalRows: allRows.length,
+            totalRows: dedupedRows.length,
+          },
+          stats: {
+            importMode,
+            insertedRows: toInsert.length,
+            updatedRows: toUpdate.length,
+            skippedRows: skipped,
+            internalDedupeDropped: internalDropped,
+            parsedRawRows: allRows.length,
           },
         });
       } catch (e) {

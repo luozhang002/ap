@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   type EnterpriseImportStreamEvent,
   readNdjsonLines,
@@ -95,9 +95,120 @@ const IMPORT_STEP_LABEL: Record<string, string> = {
   insert: "写入数据库",
 };
 
+type ImportAnalyzeResponse = {
+  fileName: string;
+  sheetNames: string[];
+  totalParsedRows: number;
+  internalDedupeDropped: number;
+  internalDedupeDetails?: Array<{
+    normalizedKey: string;
+    customerNameDisplay: string;
+    sheetKind: string;
+    sheetKindLabel: string;
+    rowIndex: number;
+    keptSheetKind: string;
+    keptSheetKindLabel: string;
+    keptRowIndex: number;
+  }>;
+  rowsAfterInternalDedupe: number;
+  duplicateVsDbCount: number;
+  newRowCount: number;
+  duplicateSamples: Array<{
+    normalizedKey: string;
+    sheetKind: string;
+    sheetKindLabel: string;
+    rowIndex: number;
+    existing: {
+      id: number;
+      batchId: number;
+      sheetKind: string;
+      sheetKindLabel: string;
+    };
+    diffFields: Array<{
+      field: string;
+      label: string;
+      oldValue: string;
+      newValue: string;
+    }>;
+  }>;
+  duplicateSamplesTruncated: boolean;
+  /** 与库重名且存在字段差异的行数；为 0 且 duplicateVsDbCount>0 表示重名行与库可比对字段全部一致 */
+  duplicateVsDbWithDiffCount?: number;
+};
+
+type ImportModeForm = "skip_existing" | "upsert";
+
+type ImportDoneStats = {
+  importMode: string;
+  insertedRows: number;
+  updatedRows: number;
+  skippedRows: number;
+  internalDedupeDropped: number;
+  parsedRawRows: number;
+};
+
+/** 文件内同名合并明细（库冲突弹窗默认折叠；仅文件内重复弹窗默认展开） */
+function ImportInternalDedupeDetails({
+  data,
+  defaultOpen = false,
+}: {
+  data: ImportAnalyzeResponse;
+  defaultOpen?: boolean;
+}) {
+  const n = data.internalDedupeDropped ?? 0;
+  if (n <= 0) return null;
+  const rows = data.internalDedupeDetails ?? [];
+  return (
+    <details className={styles.importDedupeDetails} open={defaultOpen}>
+      <summary className={styles.importDedupeSummary}>
+        查看文件内同名合并明细（共 {n} 行被合并，以各名称下 <strong>最后一行</strong>为准）
+      </summary>
+      <div className={styles.importDedupeTableWrap}>
+        <table className={styles.importDedupeTable}>
+          <thead>
+            <tr>
+              <th>规范化名称（键）</th>
+              <th>被合并行</th>
+              <th>保留行（最后一行）</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((d, i) => (
+              <tr key={`${d.normalizedKey}-${d.sheetKind}-${d.rowIndex}-${i}`}>
+                <td className={styles.importDiffCellKey}>
+                  <span className={styles.importDedupeKey}>{d.normalizedKey}</span>
+                  {d.customerNameDisplay && d.customerNameDisplay !== d.normalizedKey ? (
+                    <span className={styles.muted}>
+                      <br />
+                      原文：{d.customerNameDisplay}
+                    </span>
+                  ) : null}
+                </td>
+                <td>
+                  {d.sheetKindLabel} · 第 {d.rowIndex + 1} 行
+                </td>
+                <td>
+                  {d.keptSheetKindLabel} · 第 {d.keptRowIndex + 1} 行
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  );
+}
+
 export function EnterprisesManagement() {
   const importInputRef = useRef<HTMLInputElement>(null);
   const importAbortRef = useRef<AbortController | null>(null);
+  const pendingImportFileRef = useRef<File | null>(null);
+
+  const [importAnalyzing, setImportAnalyzing] = useState(false);
+  const [importConflict, setImportConflict] = useState<ImportAnalyzeResponse | null>(null);
+  /** 与库无重名，但文件内有同名行需合并时，先确认再导入 */
+  const [importFileDedupePreview, setImportFileDedupePreview] =
+    useState<ImportAnalyzeResponse | null>(null);
 
   const [toast, setToast] = useState<Toast | null>(null);
   const [loading, setLoading] = useState(true);
@@ -148,9 +259,18 @@ export function EnterprisesManagement() {
   const showError = (text: string) => setToast({ type: "error", text });
   const showSuccess = (text: string) => setToast({ type: "success", text });
 
+  /** 与库重名且可比对字段全部一致（无需也不建议覆盖更新） */
+  const importConflictDupAllIdenticalToDb = useMemo(() => {
+    if (!importConflict) return false;
+    const withDiff = importConflict.duplicateVsDbWithDiffCount;
+    if (withDiff === undefined) return false;
+    return importConflict.duplicateVsDbCount > 0 && withDiff === 0;
+  }, [importConflict]);
+
   useEffect(() => {
-    if (!toast || toast.type !== "success") return;
-    const t = setTimeout(() => setToast(null), 3200);
+    if (!toast) return;
+    const ms = toast.type === "success" ? 3200 : 6500;
+    const t = setTimeout(() => setToast(null), ms);
     return () => clearTimeout(t);
   }, [toast]);
 
@@ -306,10 +426,7 @@ export function EnterprisesManagement() {
     void loadBatches();
   };
 
-  const submitImport = async (fileList: FileList | null) => {
-    const file = fileList?.[0];
-    if (!file) return;
-
+  const runImportWithMode = async (file: File, importMode: ImportModeForm) => {
     importAbortRef.current?.abort();
     const ac = new AbortController();
     importAbortRef.current = ac;
@@ -319,10 +436,12 @@ export function EnterprisesManagement() {
 
     let streamError: string | null = null;
     const doneBatches: ImportDoneBatch[] = [];
+    let lastStats: ImportDoneStats | null = null;
 
     try {
       const fd = new FormData();
       fd.set("file", file);
+      fd.set("importMode", importMode);
       const res = await fetch("/api/enterprises/import", {
         method: "POST",
         body: fd,
@@ -355,6 +474,7 @@ export function EnterprisesManagement() {
           streamError = ev.message;
         } else if (ev.type === "done") {
           doneBatches.push(ev.batch);
+          if (ev.stats) lastStats = ev.stats as ImportDoneStats;
         }
       });
 
@@ -367,8 +487,16 @@ export function EnterprisesManagement() {
           ? doneBatches[doneBatches.length - 1]
           : undefined;
       if (doneBatch) {
+        const s = lastStats as ImportDoneStats | null;
+        const statLine = s
+          ? `${s.insertedRows} 行新增，${s.updatedRows} 行覆盖更新，${s.skippedRows} 行跳过${
+              s.internalDedupeDropped > 0
+                ? `（文件内已合并重复 ${s.internalDedupeDropped} 行）`
+                : ""
+            }；`
+          : "";
         showSuccess(
-          `导入成功：共 ${doneBatch.totalRows} 行（一类 ${doneBatch.rowCountYilei} / 非常规 ${doneBatch.rowCountFeichanggui} / 接力棒 ${doneBatch.rowCountJieliebang}）`
+          `${statLine}本批次共 ${doneBatch.totalRows} 行（一类 ${doneBatch.rowCountYilei} / 非常规 ${doneBatch.rowCountFeichanggui} / 接力棒 ${doneBatch.rowCountJieliebang}）`
         );
         const newBatchId = String(doneBatch.id);
         setBatchId(newBatchId);
@@ -391,6 +519,73 @@ export function EnterprisesManagement() {
       setImportProgress(null);
       importAbortRef.current = null;
     }
+  };
+
+  const submitImport = async (fileList: FileList | null) => {
+    const file = fileList?.[0];
+    if (!file) return;
+
+    pendingImportFileRef.current = file;
+    setImportAnalyzing(true);
+    setImportProgress({ percent: 0, message: "分析 Excel 与库内企业名称…", step: "prepare_db" });
+
+    try {
+      const fd = new FormData();
+      fd.set("file", file);
+      const res = await fetch("/api/enterprises/import/analyze", {
+        method: "POST",
+        body: fd,
+      });
+      const data = await parseJsonBody<ImportAnalyzeResponse & { error?: string }>(res);
+      if (!res.ok) {
+        showError(typeof data.error === "string" ? data.error : "分析失败");
+        return;
+      }
+
+      if (data.duplicateVsDbCount > 0) {
+        setImportConflict(data);
+        return;
+      }
+
+      const fileDedupe = data.internalDedupeDropped ?? 0;
+      if (fileDedupe > 0) {
+        setImportFileDedupePreview(data);
+        return;
+      }
+
+      await runImportWithMode(file, "skip_existing");
+    } catch (e) {
+      showError(e instanceof Error ? e.message : "分析失败");
+    } finally {
+      setImportAnalyzing(false);
+      setImportProgress(null);
+    }
+  };
+
+  const closeImportConflict = () => {
+    setImportConflict(null);
+    pendingImportFileRef.current = null;
+  };
+
+  const closeImportFileDedupe = () => {
+    setImportFileDedupePreview(null);
+    pendingImportFileRef.current = null;
+  };
+
+  const confirmImportWithMode = async (mode: ImportModeForm) => {
+    const file = pendingImportFileRef.current;
+    if (!file) return;
+    setImportConflict(null);
+    await runImportWithMode(file, mode);
+    pendingImportFileRef.current = null;
+  };
+
+  const confirmFileDedupeImport = async () => {
+    const file = pendingImportFileRef.current;
+    if (!file) return;
+    setImportFileDedupePreview(null);
+    await runImportWithMode(file, "skip_existing");
+    pendingImportFileRef.current = null;
   };
 
   const resetFilters = () => {
@@ -490,7 +685,8 @@ export function EnterprisesManagement() {
       </div>
 
       <p className={styles.hint}>
-        Excel 须含 <strong>3 个工作表</strong>（顺序：一类 / 非常规名单 / 接力棒）。主筛可按<strong>客户经理</strong>（导入列「负责人」）；更多筛选可按<strong>分中心负责人</strong>。
+        Excel 须含 <strong>3 个工作表</strong>（顺序：一类 / 非常规名单 / 接力棒）。导入列<strong>「客户名称」</strong>即企业名称（与下表「企业名称」同一字段）；重复导入时先分析，<strong>推荐以本次 Excel 为准覆盖更新</strong>库中已有企业。文件内多行同名保留最后一行。
+        主筛可按<strong>客户经理</strong>（导入列「负责人」）；更多筛选可按<strong>分中心负责人</strong>。
       </p>
 
       {toast?.type === "error" && <div className={styles.bannerError}>{toast.text}</div>}
@@ -577,10 +773,10 @@ export function EnterprisesManagement() {
             <button
               type="button"
               className={styles.btnImport}
-              disabled={importing}
+              disabled={importing || importAnalyzing}
               onClick={() => importInputRef.current?.click()}
             >
-              {importing ? "导入中…" : "导入"}
+              {importAnalyzing ? "分析中…" : importing ? "导入中…" : "导入"}
             </button>
             <input
               ref={importInputRef}
@@ -588,7 +784,7 @@ export function EnterprisesManagement() {
               accept=".xlsx,.xls"
               className={styles.hiddenFile}
               aria-label="上传 Excel 导入"
-              disabled={importing}
+              disabled={importing || importAnalyzing}
               onChange={(e) => {
                 void submitImport(e.target.files);
                 e.target.value = "";
@@ -898,6 +1094,188 @@ export function EnterprisesManagement() {
         </div>
       )}
 
+      {importConflict && (
+        <div
+          className={styles.importConflictOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="import-conflict-title"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) closeImportConflict();
+          }}
+        >
+          <div className={styles.importConflictCard}>
+            <h2 id="import-conflict-title" className={styles.modalTitle}>
+              与库内企业名称重复
+              {importConflictDupAllIdenticalToDb ? "（无字段差异）" : ""}
+            </h2>
+            {importConflictDupAllIdenticalToDb ? (
+              <p className={styles.importConflictNoDiffRecommend}>
+                本次 Excel 中与库<strong>重名</strong>的行，可比对字段与库中数据<strong>完全一致</strong>，无需执行覆盖更新。
+                {importConflict.newRowCount === 0 ? (
+                  <>
+                    {" "}
+                    且无新增企业，建议直接<strong>关闭</strong>。
+                  </>
+                ) : (
+                  <>
+                    {" "}
+                    若有<strong>新客户</strong>需写入，可使用「仅导入新企业」；不建议对已有行做覆盖。
+                  </>
+                )}
+              </p>
+            ) : (
+              <p className={styles.importConflictRecommend}>
+                业务上建议<strong>以本次导入为最新</strong>：选择下方<strong>「以本次 Excel 为准覆盖更新」</strong>，将保留原记录
+                ID，仅更新可导入字段。
+              </p>
+            )}
+            <p className={styles.importConflictHint}>
+              唯一键为规范化后的企业名称（Excel「客户名称」）。解析 {importConflict.totalParsedRows} 行，文件内去重后{" "}
+              {importConflict.rowsAfterInternalDedupe} 行；其中 <strong>{importConflict.newRowCount}</strong>{" "}
+              行为新企业，<strong>{importConflict.duplicateVsDbCount}</strong> 行与库中已有企业重名。
+            </p>
+            <ImportInternalDedupeDetails data={importConflict} />
+            <div className={styles.importDiffScroll}>
+              <table className={styles.importDiffTable}>
+                <thead>
+                  <tr>
+                    <th>企业名称（键）</th>
+                    <th>本次 Sheet / 行</th>
+                    <th>库中记录</th>
+                    <th>差异（节选）</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {importConflict.duplicateSamples.map((s) => (
+                    <tr key={`${s.normalizedKey}-${s.rowIndex}-${s.sheetKind}`}>
+                      <td className={styles.importDiffCellKey}>{s.normalizedKey}</td>
+                      <td>
+                        {s.sheetKindLabel} · 第 {s.rowIndex + 1} 行
+                      </td>
+                      <td>
+                        ID {s.existing.id}，批次 #{s.existing.batchId}，{s.existing.sheetKindLabel}
+                      </td>
+                      <td
+                        className={
+                          s.diffFields.length > 0
+                            ? `${styles.importDiffCellDiff} ${styles.importDiffCellDiffHighlight}`
+                            : styles.importDiffCellDiff
+                        }
+                      >
+                        {s.diffFields.length === 0 ? (
+                          <span className={styles.muted}>可比对字段一致</span>
+                        ) : (
+                          <ul className={styles.importDiffListAlert}>
+                            {s.diffFields.map((d) => (
+                              <li key={d.field}>
+                                <strong>{d.label}</strong>：库「{d.oldValue || "—"}」→ 本次「{d.newValue || "—"}」
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {importConflict.duplicateSamplesTruncated ? (
+              <p className={styles.importConflictHint}>
+                仅展示前 {importConflict.duplicateSamples.length} 条，其余请在导入后于列表中核对。
+              </p>
+            ) : null}
+            <div className={styles.importConflictActions}>
+              {importConflictDupAllIdenticalToDb ? (
+                importConflict.newRowCount === 0 ? (
+                  <button
+                    type="button"
+                    className={styles.importConflictBtnPrimary}
+                    onClick={closeImportConflict}
+                    disabled={importing}
+                  >
+                    关闭
+                  </button>
+                ) : (
+                  <>
+                    <button type="button" className={styles.btnGhost} onClick={closeImportConflict} disabled={importing}>
+                      取消
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.importConflictBtnPrimary}
+                      onClick={() => void confirmImportWithMode("skip_existing")}
+                      disabled={importing}
+                    >
+                      仅导入新企业
+                    </button>
+                  </>
+                )
+              ) : (
+                <>
+                  <button type="button" className={styles.btnGhost} onClick={closeImportConflict} disabled={importing}>
+                    取消
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.btnGhost}
+                    onClick={() => void confirmImportWithMode("skip_existing")}
+                    disabled={importing}
+                  >
+                    仅导入新企业（跳过重复）
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.importConflictBtnPrimary}
+                    onClick={() => void confirmImportWithMode("upsert")}
+                    disabled={importing}
+                  >
+                    以本次 Excel 为准覆盖更新（推荐）
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {importFileDedupePreview && (
+        <div
+          className={styles.importConflictOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="import-file-dedupe-title"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) closeImportFileDedupe();
+          }}
+        >
+          <div className={styles.importConflictCard}>
+            <h2 id="import-file-dedupe-title" className={styles.modalTitle}>
+              Excel 内存在重复客户名称
+            </h2>
+            <p className={styles.importConflictHint}>
+              与数据库中已有企业名称 <strong>无重名</strong>；重复仅出现在本次上传的 Excel 中。解析{" "}
+              {importFileDedupePreview.totalParsedRows} 行，同名按<strong>最后一行</strong>合并后{" "}
+              {importFileDedupePreview.rowsAfterInternalDedupe} 行将参与导入。请确认后再写入。
+            </p>
+            <ImportInternalDedupeDetails data={importFileDedupePreview} defaultOpen />
+            <div className={styles.importConflictActions}>
+              <button type="button" className={styles.btnGhost} onClick={closeImportFileDedupe} disabled={importing}>
+                取消
+              </button>
+              <button
+                type="button"
+                className={styles.importConflictBtnPrimary}
+                onClick={() => void confirmFileDedupeImport()}
+                disabled={importing}
+              >
+                确认导入
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {total > 0 && (
         <div className={styles.pagination}>
           <span className={styles.muted}>
@@ -924,7 +1302,7 @@ export function EnterprisesManagement() {
         </div>
       )}
 
-      {importing && (
+      {(importing || importAnalyzing) && (
         <div
           className={styles.importProgressOverlay}
           role="dialog"
@@ -933,7 +1311,7 @@ export function EnterprisesManagement() {
         >
           <div className={styles.importProgressCard}>
             <h2 id="import-progress-title" className={styles.importProgressTitle}>
-              数据导入中
+              {importAnalyzing ? "正在分析 Excel…" : "数据导入中"}
             </h2>
             <p className={styles.importProgressSub}>
               大文件将分多批写入数据库；进度会实时更新。点「取消」将中断本地等待，服务器端可能仍在处理，可稍后刷新列表确认。

@@ -21,6 +21,14 @@ export type EnterpriseImportStreamEvent =
         rowCountJieliebang: number;
         totalRows: number;
       };
+      stats?: {
+        importMode: string;
+        insertedRows: number;
+        updatedRows: number;
+        skippedRows: number;
+        internalDedupeDropped: number;
+        parsedRawRows: number;
+      };
     }
   | { type: "error"; message: string };
 

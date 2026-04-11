@@ -24,7 +24,8 @@ const DATE_FIELDS = new Set<string>([
   "registerTime",
 ]);
 
-const BOOL_FIELDS = new Set<string>([
+/** 与导入解析一致；差异对比时对布尔字段做语义归一（见 enterprise-import-dedupe） */
+export const BOOL_FIELDS = new Set<string>([
   "isMgmCustomer",
   "discountCouponAvailable",
   "defaultRateOver9",

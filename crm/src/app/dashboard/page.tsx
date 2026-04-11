@@ -1,85 +1,36 @@
 import { redirect } from "next/navigation";
-import { getEnterprisesForManager } from "@/lib/crm-visited-enterprises";
+import {
+  MANAGER_ENTERPRISES_DEFAULT_LIMIT,
+  queryManagerEnterprises,
+} from "@/lib/crm-visited-enterprises";
 import { getCrmUser } from "@/lib/session";
+import { EmptyStatePanel } from "./EmptyStatePanel";
+import MyEnterprisesSection from "./MyEnterprisesSection";
 import styles from "./page.module.css";
 
 export default async function DashboardPage() {
   const user = await getCrmUser();
   if (!user) redirect("/login");
 
-  const { items } = await getEnterprisesForManager(user.name);
+  const initialPage = await queryManagerEnterprises(user.name, {
+    limit: MANAGER_ENTERPRISES_DEFAULT_LIMIT,
+  });
 
   return (
     <div className={styles.page}>
       <header className={styles.top}>
         <div className={styles.brand}>
-          <p className={styles.brandTitle}>我的企业</p>
           <p className={styles.brandSub}>
-            {user.name}（{user.username}）
+            {user.name}（{user.username}）的客户
           </p>
         </div>
       </header>
       <main className={styles.main}>
         <section className={`${styles.hero} ${styles.heroVisited}`}>
-          <h2>我的企业</h2>
-          <p className={styles.sectionHint}>
-            根据您账号「姓名」与 OMS 中每条企业的「客户经理」逐字匹配（导入 Excel 对应「负责人」列）；含已拜访与未拜访，卡片上可区分状态。
-          </p>
-          {items.length === 0 ? (
-            <p className={styles.emptyHint}>
-              暂无负责企业。请核对账号「姓名」与 OMS 该企业行的「客户经理」是否完全一致（含空格、全半角）；导入表请对照「负责人」列，勿与其它列混淆。
-            </p>
+          {initialPage.items.length === 0 && !initialPage.hasMore ? (
+            <EmptyStatePanel variant="noEnterprises" />
           ) : (
-            <ul className={styles.cardList} aria-label="负责企业列表">
-              {items.map((e) => (
-                <li key={e.id} className={styles.visitCard}>
-                  <div className={styles.visitCardTop}>
-                    <span className={styles.visitCardName}>{e.customerName?.trim() || `企业 #${e.id}`}</span>
-                    <div className={styles.badges}>
-                      <span className={e.isVisited ? styles.statusVisited : styles.statusPending}>
-                        {e.isVisited ? "已拜访" : "未拜访"}
-                      </span>
-                      <span className={styles.kindBadge}>{e.sheetKindLabel}</span>
-                    </div>
-                  </div>
-                  {(e.province || e.city || e.district) && (
-                    <p className={styles.visitCardLine}>
-                      {[e.province, e.city, e.district].filter(Boolean).join(" · ")}
-                    </p>
-                  )}
-                  {e.issuedAddress?.trim() && (
-                    <p className={styles.visitCardAddr} title={e.issuedAddress}>
-                      {e.issuedAddress}
-                    </p>
-                  )}
-                  <dl className={styles.visitMeta}>
-                    {e.actualVisitTime && (
-                      <div className={styles.metaRow}>
-                        <dt>实际上门</dt>
-                        <dd>{e.actualVisitTime}</dd>
-                      </div>
-                    )}
-                    {e.lastVisitTime && (
-                      <div className={styles.metaRow}>
-                        <dt>最近上门</dt>
-                        <dd>{e.lastVisitTime}</dd>
-                      </div>
-                    )}
-                    {e.contactPhone?.trim() && (
-                      <div className={styles.metaRow}>
-                        <dt>联系电话</dt>
-                        <dd>{e.contactPhone}</dd>
-                      </div>
-                    )}
-                  </dl>
-                  {e.visitRemark?.trim() && (
-                    <p className={styles.visitRemark} title={e.visitRemark}>
-                      {e.visitRemark}
-                    </p>
-                  )}
-                </li>
-              ))}
-            </ul>
+            <MyEnterprisesSection initialPage={initialPage} />
           )}
         </section>
       </main>

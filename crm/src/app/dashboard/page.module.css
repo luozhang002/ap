@@ -22,13 +22,6 @@
   min-width: 0;
 }
 
-.brandTitle {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
 .brandSub {
   margin: 0;
   font-size: 12px;
@@ -51,12 +44,6 @@
   box-shadow: 0 14px 40px rgba(15, 23, 42, 0.06);
 }
 
-.hero h2 {
-  margin: 0 0 8px;
-  font-size: 18px;
-  font-weight: 800;
-}
-
 .hero p {
   margin: 0;
   font-size: 13px;
@@ -68,8 +55,163 @@
   margin-bottom: 14px;
 }
 
-.sectionHint {
-  margin: 0 0 14px !important;
+/* 原生控件 + 固定尺寸，避免 Ant Design Input 样式晚注入导致首帧闪烁 */
+.searchBar {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+@media (min-width: 480px) {
+  .searchBar {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.searchInput {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 11px;
+  font-size: 16px;
+  line-height: 1.5715;
+  color: rgba(0, 0, 0, 0.88);
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 12px;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.searchInput::placeholder {
+  color: rgba(0, 0, 0, 0.25);
+}
+
+.searchInput:hover {
+  border-color: #08979c;
+}
+
+.searchInput:focus {
+  border-color: #08979c;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(8, 151, 156, 0.15);
+}
+
+.fetchError {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #b91c1c;
+}
+
+/* 仅在滚到底且无法继续滚动时短暂出现，固定在 Tab 上方 */
+.endToast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+  z-index: 210;
+  margin: 0;
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  letter-spacing: 0.02em;
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid rgba(8, 151, 156, 0.28);
+  border-radius: 999px;
+  box-shadow: 0 10px 36px rgba(15, 23, 42, 0.14);
+  transform: translate(-50%, 0);
+  animation: endToastIn 0.22s ease-out;
+  pointer-events: none;
+}
+
+@keyframes endToastIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.scrollSentinel {
+  height: 1px;
+  margin-top: 8px;
+}
+
+/* 空状态：与卡片区视觉统一 */
+.emptyPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px 20px 36px;
+  margin-top: 2px;
+  border-radius: 14px;
+  border: 1px dashed rgba(8, 151, 156, 0.32);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.96) 0%, rgba(230, 255, 251, 0.42) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.emptyPanelSearch {
+  border-style: solid;
+  border-color: rgba(8, 151, 156, 0.2);
+  background: linear-gradient(180deg, rgba(240, 253, 250, 0.9) 0%, rgba(255, 255, 255, 0.88) 55%, rgba(248, 250, 252, 0.65) 100%);
+}
+
+.emptyPanelInbox {
+  border-color: rgba(148, 163, 184, 0.35);
+  background: linear-gradient(165deg, rgba(248, 250, 252, 0.95) 0%, rgba(255, 255, 255, 0.88) 100%);
+}
+
+.emptyIconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(8, 151, 156, 0.18), rgba(8, 151, 156, 0.06));
+  color: #08979c;
+}
+
+.emptyPanelInbox .emptyIconWrap {
+  color: rgba(100, 116, 139, 0.85);
+  background: radial-gradient(circle at 30% 30%, rgba(148, 163, 184, 0.2), rgba(148, 163, 184, 0.06));
+}
+
+.emptySvg {
+  width: 36px;
+  height: 36px;
+}
+
+.emptyTitle {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+
+.emptyDesc {
+  margin: 0;
+  max-width: 300px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: rgba(71, 85, 105, 0.92);
+}
+
+.filterEmpty {
+  margin: 0 !important;
+  font-size: 13px;
+  line-height: 1.65;
+  color: rgba(100, 116, 139, 0.98);
 }
 
 .emptyHint {

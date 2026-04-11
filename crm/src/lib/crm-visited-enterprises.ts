@@ -23,6 +23,8 @@ export type ManagerEnterpriseCard = {
   lastVisitTime: string | null;
   actualVisitTime: string | null;
   contactPhone: string | null;
+  /** 法人姓名（与 OMS / Excel「法人姓名」一致） */
+  legalPersonName: string | null;
   visitRemark: string | null;
 };
 
@@ -42,16 +44,91 @@ export function rowIsVisited(r: {
   return av || r.lastVisitTime != null || r.actualVisitTime != null;
 }
 
+/** 首页 / 接口分页默认条数 */
+export const MANAGER_ENTERPRISES_DEFAULT_LIMIT = 20;
+export const MANAGER_ENTERPRISES_MAX_LIMIT = 100;
+
+function mapRowsToCards(
+  rows: Array<{
+    id: number;
+    customerName: string | null;
+    sheetKind: EnterpriseSheetKind;
+    issuedAddress: string | null;
+    province: string | null;
+    city: string | null;
+    district: string | null;
+    actuallyVisited: boolean | number | bigint | null;
+    lastVisitTime: Date | null;
+    actualVisitTime: Date | null;
+      contactPhone: string | null;
+      legalPersonName: string | null;
+      visitRemark: string | null;
+    }>,
+): ManagerEnterpriseCard[] {
+  return rows.map((r) => ({
+    id: r.id,
+    customerName: r.customerName,
+    sheetKind: r.sheetKind,
+    sheetKindLabel: SHEET_LABEL[r.sheetKind] ?? r.sheetKind,
+    issuedAddress: r.issuedAddress,
+    province: r.province,
+    city: r.city,
+    district: r.district,
+    isVisited: rowIsVisited(r),
+    lastVisitTime: fmtDisplay(r.lastVisitTime),
+    actualVisitTime: fmtDisplay(r.actualVisitTime),
+    contactPhone: r.contactPhone,
+    legalPersonName: r.legalPersonName,
+    visitRemark: r.visitRemark,
+  }));
+}
+
 /**
- * 客户经理（`ownerName`，与 OMS「客户经理」/ 导入一致）名下全部企业（含已拜访与未拜访）。
+ * 客户经理名下企业分页（按 id 倒序）。`cursor` 为上一页最后一条的 id，下一页 `WHERE id < cursor`。
  */
-export async function getEnterprisesForManager(userDisplayName: string): Promise<{
+export async function queryManagerEnterprises(
+  userDisplayName: string,
+  options: {
+    cursor?: number;
+    limit: number;
+    nameQ?: string;
+    cityQ?: string;
+  },
+): Promise<{
   items: ManagerEnterpriseCard[];
+  nextCursor: number | null;
+  hasMore: boolean;
 }> {
   const n = normalizeManagerName(userDisplayName);
   if (!n) {
-    return { items: [] };
+    return { items: [], nextCursor: null, hasMore: false };
   }
+
+  const nameTrim = (options.nameQ ?? "").trim();
+  const cityTrim = (options.cityQ ?? "").trim();
+  const limit = Math.min(Math.max(1, options.limit), MANAGER_ENTERPRISES_MAX_LIMIT);
+  const take = limit + 1;
+
+  const conditions: Prisma.Sql[] = [
+    Prisma.sql`ownerName IS NOT NULL AND TRIM(ownerName) = ${n}`,
+  ];
+  if (options.cursor != null && Number.isFinite(options.cursor)) {
+    conditions.push(Prisma.sql`id < ${options.cursor}`);
+  }
+  if (nameTrim) {
+    conditions.push(Prisma.sql`(customerName IS NOT NULL AND LOCATE(${nameTrim}, customerName) > 0)`);
+  }
+  if (cityTrim) {
+    conditions.push(
+      Prisma.sql`(
+        LOCATE(${cityTrim}, IFNULL(city,'')) > 0
+        OR LOCATE(${cityTrim}, IFNULL(province,'')) > 0
+        OR LOCATE(${cityTrim}, IFNULL(district,'')) > 0
+      )`,
+    );
+  }
+
+  const whereClause = Prisma.sql`WHERE ${Prisma.join(conditions, " AND ")}`;
 
   const rows = await prisma.$queryRaw<
     Array<{
@@ -66,36 +143,35 @@ export async function getEnterprisesForManager(userDisplayName: string): Promise
       lastVisitTime: Date | null;
       actualVisitTime: Date | null;
       contactPhone: string | null;
+      legalPersonName: string | null;
       visitRemark: string | null;
     }>
   >(
     Prisma.sql`
       SELECT id, customerName, sheetKind, issuedAddress, province, city, district,
-             actuallyVisited, lastVisitTime, actualVisitTime, contactPhone, visitRemark
+             actuallyVisited, lastVisitTime, actualVisitTime, contactPhone, legalPersonName, visitRemark
       FROM enterprise_records
-      WHERE ownerName IS NOT NULL
-        AND TRIM(ownerName) = ${n}
+      ${whereClause}
       ORDER BY id DESC
-      LIMIT 500
+      LIMIT ${take}
     `,
   );
 
-  const items: ManagerEnterpriseCard[] = rows.map((r) => ({
-    id: r.id,
-    customerName: r.customerName,
-    sheetKind: r.sheetKind,
-    sheetKindLabel: SHEET_LABEL[r.sheetKind] ?? r.sheetKind,
-    issuedAddress: r.issuedAddress,
-    province: r.province,
-    city: r.city,
-    district: r.district,
-    isVisited: rowIsVisited(r),
-    lastVisitTime: fmtDisplay(r.lastVisitTime),
-    actualVisitTime: fmtDisplay(r.actualVisitTime),
-    contactPhone: r.contactPhone,
-    visitRemark: r.visitRemark,
-  }));
+  const hasMore = rows.length > limit;
+  const slice = hasMore ? rows.slice(0, limit) : rows;
+  const items = mapRowsToCards(slice);
+  const nextCursor = hasMore && items.length > 0 ? items[items.length - 1].id : null;
 
+  return { items, nextCursor, hasMore };
+}
+
+/**
+ * 客户经理（`ownerName`，与 OMS「客户经理」/ 导入一致）名下企业，最多 500 条（兼容旧逻辑）。
+ */
+export async function getEnterprisesForManager(userDisplayName: string): Promise<{
+  items: ManagerEnterpriseCard[];
+}> {
+  const { items } = await queryManagerEnterprises(userDisplayName, { limit: 500 });
   return { items };
 }
 
